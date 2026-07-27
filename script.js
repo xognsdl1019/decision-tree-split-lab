@@ -1,18 +1,18 @@
 "use strict";
 
 const DATA = [
-  { id: 1, age: "청소년", income: "높음", student: "아니오", credit: "양호", result: "미구매" },
-  { id: 2, age: "청소년", income: "높음", student: "아니오", credit: "우수", result: "미구매" },
+  { id: 1, age: "청소년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
+  { id: 2, age: "청소년", income: "높음", student: "아니오", credit: "우수", result: "구매" },
   { id: 3, age: "청년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
   { id: 4, age: "중년", income: "중간", student: "아니오", credit: "양호", result: "구매" },
   { id: 5, age: "중년", income: "낮음", student: "예", credit: "양호", result: "구매" },
   { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
-  { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "구매" },
+  { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "미구매" },
   { id: 8, age: "청소년", income: "중간", student: "아니오", credit: "양호", result: "미구매" },
   { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "미구매" },
   { id: 10, age: "중년", income: "중간", student: "예", credit: "양호", result: "구매" },
   { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "미구매" },
-  { id: 12, age: "청년", income: "중간", student: "아니오", credit: "우수", result: "구매" },
+  { id: 12, age: "청년", income: "중간", student: "아니오", credit: "우수", result: "미구매" },
   { id: 13, age: "청년", income: "높음", student: "예", credit: "양호", result: "구매" },
   { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "구매" }
 ];
@@ -51,9 +51,11 @@ const POINT_OFFSETS = [
 const state = {
   stage: "first",
   orientation: "vertical",
-  candidate: 2,
+  candidate: 1,
   firstSplit: null,
+  selectedGroup: null,
   scopeIds: DATA.map((row) => row.id),
+  secondSplit: null,
   dragging: false,
   feedback: ""
 };
@@ -82,8 +84,8 @@ function entropy(records) {
   }, 0);
 }
 
-function splitMetrics(split) {
-  const beforeRecords = recordsFromIds(state.scopeIds);
+function splitMetrics(split, scopeIds = state.scopeIds) {
+  const beforeRecords = recordsFromIds(scopeIds);
   const groupA = recordsFromIds(split.groups.A);
   const groupB = recordsFromIds(split.groups.B);
   const before = entropy(beforeRecords);
@@ -136,12 +138,36 @@ function validCandidates(ids, orientation) {
   });
 }
 
+function bestSplitForScope(ids, orientations = ["vertical", "horizontal"]) {
+  const options = orientations.flatMap((orientation) => {
+    return validCandidates(ids, orientation).map((candidate) => {
+      const split = getSplit(orientation, candidate, ids);
+      return { split, metrics: splitMetrics(split, ids) };
+    });
+  });
+  return options.reduce((best, option) => {
+    return !best || option.metrics.gain > best.metrics.gain ? option : best;
+  }, null);
+}
+
 function currentSplit() {
   return getSplit(state.orientation, state.candidate, state.scopeIds);
 }
 
 function currentScopeBounds() {
-  return { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
+  const bounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
+  if ((state.stage !== "second" && state.stage !== "complete") || !state.firstSplit) {
+    return bounds;
+  }
+
+  if (state.firstSplit.orientation === "vertical") {
+    if (state.selectedGroup === "A") bounds.x2 = state.firstSplit.coordinate;
+    else bounds.x1 = state.firstSplit.coordinate;
+  } else {
+    if (state.selectedGroup === "A") bounds.y1 = state.firstSplit.coordinate;
+    else bounds.y2 = state.firstSplit.coordinate;
+  }
+  return bounds;
 }
 
 function setScreen(screen) {
@@ -160,9 +186,11 @@ function setScreen(screen) {
 function resetExperience() {
   state.stage = "first";
   state.orientation = "vertical";
-  state.candidate = 2;
+  state.candidate = 1;
   state.firstSplit = null;
+  state.selectedGroup = null;
   state.scopeIds = DATA.map((row) => row.id);
+  state.secondSplit = null;
   state.dragging = false;
   state.feedback = "";
   renderAll();
@@ -284,18 +312,36 @@ function axesMarkup() {
 
 function renderPlot() {
   const plotWrap = document.getElementById("plot-wrap");
-  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
   const scopeBounds = currentScopeBounds();
-  const regions = regionMarkup(split, scopeBounds);
-  const lines = splitLineMarkup(split, scopeBounds, state.stage === "first");
-  plotWrap.classList.toggle("is-perfect", splitMetrics(split).perfect);
+  const scopeSet = new Set(state.scopeIds);
+  let regions = "";
+  let lines = "";
+  let displayedSplit = currentSplit();
+
+  if (state.stage === "first") {
+    regions = regionMarkup(displayedSplit, scopeBounds);
+    lines = splitLineMarkup(displayedSplit, scopeBounds, true);
+  } else {
+    displayedSplit = state.stage === "complete" ? state.secondSplit : currentSplit();
+    const rootBounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
+    regions = regionMarkup(displayedSplit, scopeBounds);
+    lines = `
+      ${splitLineMarkup(state.firstSplit, rootBounds, false)}
+      ${splitLineMarkup(displayedSplit, scopeBounds, state.stage === "second")}
+      <rect class="scope-outline" x="${scopeBounds.x1 + 2}" y="${scopeBounds.y1 + 2}"
+        width="${scopeBounds.x2 - scopeBounds.x1 - 4}" height="${scopeBounds.y2 - scopeBounds.y1 - 4}" rx="8"></rect>
+      <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">다시 나누는 혼합 집단</text>
+    `;
+  }
+  plotWrap.classList.toggle("is-perfect", state.stage !== "first" && splitMetrics(displayedSplit).perfect);
 
   const cellCounts = new Map();
   const points = DATA.map((row) => {
     const cellKey = `${row.age}-${row.income}`;
     const index = cellCounts.get(cellKey) || 0;
     cellCounts.set(cellKey, index + 1);
-    return pointMarkup(row, pointPosition(row, index), false);
+    const dimmed = state.stage !== "first" && !scopeSet.has(row.id);
+    return pointMarkup(row, pointPosition(row, index), dimmed);
   }).join("");
 
   plotWrap.innerHTML = `
@@ -320,12 +366,17 @@ function renderOrientationControls() {
   }
 
   container.hidden = false;
-  container.innerHTML = ["vertical", "horizontal"].map((orientation) => {
+  const orientations = state.stage === "second"
+    ? [state.firstSplit.orientation === "vertical" ? "horizontal" : "vertical"]
+    : ["vertical", "horizontal"];
+  container.classList.toggle("is-single", orientations.length === 1);
+  container.innerHTML = orientations.map((orientation) => {
     const valid = validCandidates(state.scopeIds, orientation).length > 0;
+    const prefix = state.stage === "second" ? "두 번째 분할" : AXES[orientation].title;
     return `
       <button class="orientation-button ${state.orientation === orientation ? "is-active" : ""}"
         type="button" data-orientation="${orientation}" ${valid ? "" : "disabled"}>
-        ${orientation === "vertical" ? "↔" : "↕"} ${AXES[orientation].title}
+        ${orientation === "vertical" ? "↔" : "↕"} ${prefix}${state.stage === "second" ? ` · ${AXES[orientation].shortTitle}` : ""}
       </button>
     `;
   }).join("");
@@ -393,7 +444,7 @@ function summaryCard(group, label, records) {
 
 function renderSplitMetrics() {
   const container = document.getElementById("split-metrics");
-  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
+  const split = state.stage === "complete" ? state.secondSplit : currentSplit();
   const metrics = splitMetrics(split);
   container.classList.toggle("is-perfect", metrics.perfect);
   container.innerHTML = `
@@ -418,7 +469,7 @@ function renderSplitMetrics() {
 function renderGroupSummary() {
   const container = document.getElementById("group-summary");
   container.hidden = false;
-  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
+  const split = state.stage === "complete" ? state.secondSplit : currentSplit();
   const groupA = recordsFromIds(split.groups.A);
   const groupB = recordsFromIds(split.groups.B);
   container.innerHTML = `
@@ -430,6 +481,17 @@ function renderGroupSummary() {
 function groupNodeMarkup(ids, values) {
   const records = recordsFromIds(ids);
   const result = counts(records);
+  const groupEntropy = entropy(records);
+  if (groupEntropy >= 0.0005) {
+    return `
+      <div class="group-node mixed-node is-selected">
+        <strong>${values.join(" · ")}</strong>
+        <span>혼합 집단 · ${result.total}명 · H ${formatNumber(groupEntropy)}</span>
+        <small><i class="buy-text">● 구매 ${result.purchase}</i> · <i class="no-text">▲ 미구매 ${result.noPurchase}</i></small>
+      </div>
+    `;
+  }
+
   const classification = result.purchase === result.total ? "구매" : "미구매";
   const leafClass = classification === "구매" ? "is-buy" : "is-no";
   return `
@@ -437,6 +499,28 @@ function groupNodeMarkup(ids, values) {
       <strong>${values.join(" · ")}</strong>
       <span>리프 노드 · ${result.total}명</span>
       <small>${classification === "구매" ? "●" : "▲"} 최종 분류: ${classification}</small>
+    </div>
+  `;
+}
+
+function secondSubtreeMarkup(split) {
+  const metrics = splitMetrics(split, state.scopeIds);
+  return `
+    <div class="subtree">
+      <div class="question-node">
+        <small>두 번째 질문 · Gain ${formatNumber(metrics.gain)}</small>
+        ${split.question}
+      </div>
+      <div class="tree-branches">
+        <div class="tree-branch">
+          <span class="branch-label">아니오</span>
+          ${groupNodeMarkup(split.groups.A, split.aValues)}
+        </div>
+        <div class="tree-branch">
+          <span class="branch-label">예</span>
+          ${groupNodeMarkup(split.groups.B, split.bValues)}
+        </div>
+      </div>
     </div>
   `;
 }
@@ -460,30 +544,39 @@ function renderTree() {
     return;
   }
 
-  questionCount.textContent = "질문 1개";
+  questionCount.textContent = `질문 ${state.secondSplit ? 2 : 1}개`;
   const root = state.firstSplit;
+  const rootMetrics = splitMetrics(root, DATA.map((row) => row.id));
+  const branchA = state.selectedGroup === "A" && state.secondSplit
+    ? secondSubtreeMarkup(state.secondSplit)
+    : groupNodeMarkup(root.groups.A, root.aValues);
+  const branchB = state.selectedGroup === "B" && state.secondSplit
+    ? secondSubtreeMarkup(state.secondSplit)
+    : groupNodeMarkup(root.groups.B, root.bValues);
 
   treeStage.innerHTML = `
     <div class="tree-root">
       <div class="question-node">
-        <small>첫 번째 질문</small>
+        <small>첫 번째 질문 · Gain ${formatNumber(rootMetrics.gain)}</small>
         ${root.question}
       </div>
       <div class="tree-branches">
         <div class="tree-branch">
           <span class="branch-label">아니오</span>
-          ${groupNodeMarkup(root.groups.A, root.aValues)}
+          ${branchA}
         </div>
         <div class="tree-branch">
           <span class="branch-label">예</span>
-          ${groupNodeMarkup(root.groups.B, root.bValues)}
+          ${branchB}
         </div>
       </div>
     </div>
   `;
 
   treeGuide.classList.add("is-active");
-  treeGuide.textContent = "양쪽 집단의 엔트로피가 0이어서 바로 결과 리프가 되었습니다.";
+  treeGuide.textContent = state.stage === "second"
+    ? "아직 섞여 있는 집단을 이번에는 Y축 수입으로 다시 나눕니다."
+    : "두 번의 분할이 두 개의 질문이 되어 세 개의 결과 리프를 만들었습니다.";
 }
 
 function renderStageText() {
@@ -493,8 +586,9 @@ function renderStageText() {
   const completion = document.getElementById("completion-banner");
 
   const stageText = {
-    first: "분할선 탐색",
-    complete: "완전 분리"
+    first: "1차 · 나이 분할",
+    second: "2차 · 수입 분할",
+    complete: "트리 완성"
   };
   chip.textContent = stageText[state.stage];
   completion.hidden = state.stage !== "complete";
@@ -502,27 +596,45 @@ function renderStageText() {
 
   if (state.stage === "first") {
     const metrics = splitMetrics(currentSplit());
+    const best = bestSplitForScope(state.scopeIds);
+    const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
+    if (state.feedback) {
+      guide.textContent = state.feedback;
+      guide.classList.add("is-error");
+    } else if (isBest) {
+      guide.textContent = "첫 번째 질문으로 가장 많이 섞임을 줄이는 위치입니다. 이 분할선을 확정하세요.";
+      guide.classList.add("is-perfect");
+    } else {
+      guide.textContent = "X축과 Y축의 선을 움직이며 정보이득이 더 커지는 위치를 찾아보세요.";
+    }
+    confirm.hidden = false;
+    confirm.disabled = false;
+    confirm.textContent = "첫 번째 분할 확정";
+  } else if (state.stage === "second") {
+    const metrics = splitMetrics(currentSplit());
     if (state.feedback) {
       guide.textContent = state.feedback;
       guide.classList.add("is-error");
     } else if (metrics.perfect) {
-      guide.textContent = "두 집단의 엔트로피가 모두 0입니다. 이 분할선을 확정하세요.";
+      guide.textContent = "남은 혼합 집단도 엔트로피 0으로 완전히 나뉘었습니다. 두 번째 선을 확정하세요.";
       guide.classList.add("is-perfect");
     } else {
-      guide.textContent = "선을 움직여 두 집단의 엔트로피가 모두 0이 되는 위치를 찾아보세요.";
+      guide.textContent = "강조된 혼합 집단 안에서 Y축 분할선을 움직여 보세요.";
     }
     confirm.hidden = false;
     confirm.disabled = false;
-    confirm.textContent = "이 분할선 확정";
+    confirm.textContent = "두 번째 분할 확정";
   } else {
-    guide.textContent = `정보이득 ${formatNumber(splitMetrics(state.firstSplit).gain)}만큼 불확실성이 줄어 두 결과가 완전히 분리되었습니다.`;
+    const firstGain = splitMetrics(state.firstSplit, DATA.map((row) => row.id)).gain;
+    const secondGain = splitMetrics(state.secondSplit, state.scopeIds).gain;
+    guide.textContent = `첫 질문 Gain ${formatNumber(firstGain)} → 두 번째 질문 Gain ${formatNumber(secondGain)}으로 모든 리프가 완성되었습니다.`;
     guide.classList.add("is-perfect");
     confirm.hidden = true;
   }
 
   document.querySelectorAll("[data-header-step]").forEach((element) => {
     const step = Number(element.dataset.headerStep);
-    const active = state.stage === "first" ? 2 : 3;
+    const active = state.stage === "complete" ? 3 : 2;
     element.classList.toggle("is-active", step === active);
     element.classList.toggle("is-done", step < active);
   });
@@ -542,12 +654,39 @@ function confirmCurrentSplit() {
   if (state.stage === "first") {
     const split = currentSplit();
     const metrics = splitMetrics(split);
-    if (!metrics.perfect) {
-      state.feedback = "아직 구매와 미구매가 섞여 있습니다. 엔트로피가 0이 되는 위치를 찾아보세요.";
+    const best = bestSplitForScope(state.scopeIds);
+    if (Math.abs(metrics.gain - best.metrics.gain) >= 0.0005) {
+      state.feedback = "이 위치보다 정보이득이 더 큰 분할이 있습니다. 선을 한 번 더 움직여 비교해 보세요.";
       renderAll();
       return;
     }
+
     state.firstSplit = split;
+    const mixedGroups = ["A", "B"].filter((group) => {
+      return entropy(recordsFromIds(split.groups[group])) >= 0.0005;
+    });
+    state.selectedGroup = mixedGroups.sort((a, b) => {
+      return entropy(recordsFromIds(split.groups[b])) - entropy(recordsFromIds(split.groups[a]));
+    })[0];
+    state.scopeIds = [...split.groups[state.selectedGroup]];
+    state.orientation = split.orientation === "vertical" ? "horizontal" : "vertical";
+    state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
+    state.feedback = "";
+    state.stage = "second";
+    renderAll();
+    return;
+  }
+
+  if (state.stage === "second") {
+    const split = currentSplit();
+    const metrics = splitMetrics(split);
+    if (!metrics.perfect) {
+      state.feedback = "아직 선택한 집단에 구매와 미구매가 섞여 있습니다. Y축 선을 다른 위치로 옮겨보세요.";
+      renderAll();
+      return;
+    }
+
+    state.secondSplit = split;
     state.feedback = "";
     state.stage = "complete";
     renderAll();
@@ -590,7 +729,7 @@ function updateDragPreview(coordinate) {
 }
 
 function bindDragEvents() {
-  if (state.stage !== "first") return;
+  if (state.stage !== "first" && state.stage !== "second") return;
   const svg = document.getElementById("scatter-svg");
   const lineGroup = document.getElementById("active-split-line");
   if (!svg || !lineGroup) return;

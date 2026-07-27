@@ -29,17 +29,17 @@
           <h1 id="intro-title">질문과 분할로 만드는<br>의사결정 트리</h1>
           <p class="intro-lead">
             점들을 관찰하고 분할선을 직접 움직여 보세요.<br>
-            내가 선택한 선이 트리의 <strong>질문 하나</strong>로 바뀝니다.
+            X축과 Y축에서 선택한 두 선이 트리의 <strong>질문 두 개</strong>로 바뀝니다.
           </p>
 
           <div class="intro-steps">
             <div><span>1</span><p><strong>점을 관찰하고</strong><small>고객 14명의 위치와 결과 확인</small></p></div>
             <div><span>2</span><p><strong>선을 움직이고</strong><small>섞임과 엔트로피가 줄어드는지 확인</small></p></div>
-            <div><span>3</span><p><strong>질문으로 바꿉니다</strong><small>정확히 나눈 선을 질문 하나로 변환</small></p></div>
+            <div><span>3</span><p><strong>한 번 더 나눕니다</strong><small>남은 혼합 집단을 다른 축으로 분할</small></p></div>
           </div>
 
           <button id="start-button" class="primary-button" type="button">
-            분할선 움직여 보기 <span aria-hidden="true">→</span>
+            두 축으로 분할해 보기 <span aria-hidden="true">→</span>
           </button>
         </div>
 
@@ -54,7 +54,7 @@
             <i class="preview-grid x1"></i><i class="preview-grid x2"></i>
             <i class="preview-grid y1"></i><i class="preview-grid y2"></i>
             <i class="preview-line"></i>
-            <b class="dot no d1">1</b><b class="dot no d2">2</b>
+            <b class="dot buy d1">1</b><b class="dot buy d2">2</b>
             <b class="dot no d3">8</b><b class="dot no d4">9</b>
             <b class="dot buy d5">3</b><b class="dot buy d6">6</b>
             <b class="dot buy d7">10</b><b class="dot buy d8">14</b>
@@ -65,7 +65,7 @@
           </div>
           <div class="core-card">
             <span>핵심 경험</span>
-            <strong>하나의 분할 기준 → 하나의 질문</strong>
+            <strong>분할선 하나마다 질문 하나</strong>
           </div>
         </div>
       </div>
@@ -82,7 +82,7 @@
 
       <div id="completion-banner" class="completion-banner" hidden>
         <span aria-hidden="true">✓</span>
-        <p><strong>완전히 분리된 선이 하나의 질문이 되었습니다.</strong> 두 집단이 결과 리프가 되었습니다.</p>
+        <p><strong>X축과 Y축의 두 분할선이 질문 두 개가 되었습니다.</strong> 세 개의 결과 리프가 완성되었습니다.</p>
       </div>
 
       <div class="lab-grid">
