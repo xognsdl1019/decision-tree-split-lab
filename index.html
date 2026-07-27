@@ -3,164 +3,136 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Computer Purchase 데이터로 엔트로피와 정보이득을 비교하며 의사결정 트리를 만드는 실습">
+  <meta name="description" content="점을 직접 나누며 분할 기준이 의사결정 트리의 질문으로 바뀌는 과정을 체험하는 실습">
   <title>질문과 분할로 만드는 의사결정 트리</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <p class="course-title">인공지능 개론 <span aria-hidden="true">|</span> 의사결정 트리 분할 실습</p>
-      <div class="stepper" aria-label="실습 진행 단계">
-        <span class="step-dot is-active" data-progress="1">1 <b>데이터</b></span>
-        <span class="step-line" aria-hidden="true"></span>
-        <span class="step-dot" data-progress="2">2 <b>질문·분할</b></span>
-        <span class="step-line" aria-hidden="true"></span>
-        <span class="step-dot" data-progress="3">3 <b>트리 완성</b></span>
+      <p class="course-title">인공지능 개론 <span>|</span> 의사결정 트리 분할 실습</p>
+      <div class="header-steps" aria-label="실습 흐름">
+        <span class="is-active" data-header-step="1"><b>1</b> 점 관찰</span>
+        <i aria-hidden="true"></i>
+        <span data-header-step="2"><b>2</b> 선 이동</span>
+        <i aria-hidden="true"></i>
+        <span data-header-step="3"><b>3</b> 질문 확인</span>
       </div>
     </div>
   </header>
 
   <main>
     <section id="intro-screen" class="screen is-active" aria-labelledby="intro-title">
-      <div class="intro-heading">
-        <div>
-          <p class="eyebrow">STEP 1 · 데이터 확인</p>
-          <h1 id="intro-title">질문과 분할로 만드는 의사결정 트리</h1>
-          <p class="lead">어떤 질문으로 나누면 <strong>구매</strong>와 <strong>미구매</strong>를 가장 잘 구분할 수 있을까요?</p>
-        </div>
-        <div class="dataset-summary" aria-label="전체 데이터 요약">
-          <span class="summary-total">전체 <strong>14명</strong></span>
-          <span class="label-purchase"><i aria-hidden="true">●</i> 구매 <strong>9명</strong></span>
-          <span class="label-no"><i aria-hidden="true">▲</i> 미구매 <strong>5명</strong></span>
-          <span>H(D) = <strong>0.940</strong></span>
-        </div>
-      </div>
+      <div class="intro-layout">
+        <div class="intro-copy">
+          <p class="eyebrow">분할을 눈으로 이해하는 실습</p>
+          <h1 id="intro-title">질문과 분할로 만드는<br>의사결정 트리</h1>
+          <p class="intro-lead">
+            점들을 관찰하고 분할선을 직접 움직여 보세요.<br>
+            내가 선택한 선이 트리의 <strong>질문 하나</strong>로 바뀝니다.
+          </p>
 
-      <div class="intro-grid">
-        <div class="data-card">
-          <div class="table-wrap">
-            <table>
-              <caption class="sr-only">Computer Purchase 고객 14명의 학습 데이터</caption>
-              <thead>
-                <tr>
-                  <th scope="col">번호</th>
-                  <th scope="col">나이</th>
-                  <th scope="col">수입</th>
-                  <th scope="col">학생 여부</th>
-                  <th scope="col">신용등급</th>
-                  <th scope="col">실제값</th>
-                </tr>
-              </thead>
-              <tbody id="data-table-body"></tbody>
-            </table>
+          <div class="intro-steps">
+            <div><span>1</span><p><strong>점을 관찰하고</strong><small>고객 14명의 위치와 결과 확인</small></p></div>
+            <div><span>2</span><p><strong>선을 움직이고</strong><small>두 집단으로 어떻게 나뉘는지 확인</small></p></div>
+            <div><span>3</span><p><strong>질문으로 바꿉니다</strong><small>같은 과정을 한 번 더 반복</small></p></div>
           </div>
-        </div>
 
-        <aside class="guide-card" aria-label="실습 안내">
-          <h2>데이터 읽기</h2>
-          <ul class="guide-list">
-            <li><span>1</span><p>한 행은 <strong>고객 한 명</strong>입니다.</p></li>
-            <li><span>2</span><p>네 가지 <strong>입력 특성</strong>으로 구매 여부를 예측합니다.</p></li>
-            <li><span>3</span><p>현재 구매 9명과 미구매 5명이 <strong>섞여 있습니다.</strong></p></li>
-          </ul>
-          <div class="core-message">
-            <span>핵심 질문</span>
-            <strong>어떤 기준으로 나누면<br>두 결과가 덜 섞일까?</strong>
-          </div>
           <button id="start-button" class="primary-button" type="button">
-            분할 실습 시작 <span aria-hidden="true">→</span>
+            분할선 움직여 보기 <span aria-hidden="true">→</span>
           </button>
-        </aside>
+        </div>
+
+        <div class="intro-visual-card" aria-label="실습 화면 미리보기">
+          <div class="preview-heading">
+            <span>점 하나 = 고객 한 명</span>
+            <strong>Computer Purchase · 14명</strong>
+          </div>
+          <div class="preview-plot">
+            <span class="preview-axis-y">수입</span>
+            <span class="preview-axis-x">나이</span>
+            <i class="preview-grid x1"></i><i class="preview-grid x2"></i>
+            <i class="preview-grid y1"></i><i class="preview-grid y2"></i>
+            <i class="preview-line"></i>
+            <b class="dot buy d1">3</b><b class="dot no d2">1</b>
+            <b class="dot buy d3">9</b><b class="dot no d4">8</b>
+            <b class="dot buy d5">7</b><b class="dot no d6">14</b>
+            <b class="dot buy d7">10</b><b class="dot no d8">6</b>
+          </div>
+          <div class="legend-row">
+            <span class="buy-legend"><i>●</i> 구매 9명</span>
+            <span class="no-legend"><i>▲</i> 미구매 5명</span>
+          </div>
+          <div class="core-card">
+            <span>핵심 경험</span>
+            <strong>하나의 분할 기준 → 하나의 질문</strong>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="lab-screen" class="screen" aria-labelledby="lab-title">
-      <div class="section-heading">
+      <div class="lab-heading">
         <div>
-          <p class="eyebrow">STEP 2 · 질문과 분할</p>
-          <h1 id="lab-title">분할 기준을 직접 비교하세요</h1>
+          <p class="eyebrow">점을 나누는 선이 질문이 되는 과정</p>
+          <h1 id="lab-title">분할선을 직접 움직여 보세요</h1>
         </div>
-        <div id="node-context" class="node-context"></div>
+        <span id="stage-chip" class="stage-chip">첫 번째 분할</span>
       </div>
 
-      <div class="lab-layout">
-        <div class="work-panel">
-          <div id="split-workspace"></div>
-        </div>
+      <div id="completion-banner" class="completion-banner" hidden>
+        <span aria-hidden="true">✓</span>
+        <p><strong>두 개의 분할선이 두 개의 질문이 되었습니다.</strong> 트리가 자라는 과정을 확인했습니다.</p>
+      </div>
 
-        <aside class="tree-panel" aria-labelledby="tree-panel-title">
-          <div class="panel-title-row">
+      <div class="lab-grid">
+        <section class="plot-panel" aria-labelledby="plot-title">
+          <div class="panel-top">
             <div>
-              <p class="mini-label">실시간 연계</p>
-              <h2 id="tree-panel-title">의사결정 트리</h2>
+              <p class="mini-label">14명의 구매 데이터</p>
+              <h2 id="plot-title">X축: 나이 · Y축: 수입</h2>
             </div>
-            <span id="tree-node-count" class="count-chip"></span>
+            <div class="plot-legend">
+              <span class="buy-legend"><i>●</i> 구매</span>
+              <span class="no-legend"><i>▲</i> 미구매</span>
+            </div>
+          </div>
+
+          <div id="orientation-controls" class="orientation-controls" aria-label="분할 방향 선택"></div>
+
+          <div id="plot-wrap" class="plot-wrap"></div>
+
+          <div id="candidate-controls" class="candidate-controls" aria-label="분할 후보 선택"></div>
+
+          <div id="group-summary" class="group-summary" aria-live="polite"></div>
+
+          <div class="plot-actions">
+            <p id="action-guide" class="action-guide"></p>
+            <button id="confirm-split-button" class="primary-button compact" type="button">
+              이 분할선 확정
+            </button>
+            <button id="restart-button" class="secondary-button compact" type="button">
+              ↻ 처음부터
+            </button>
+          </div>
+        </section>
+
+        <aside class="tree-panel" aria-labelledby="tree-title">
+          <div class="panel-top">
+            <div>
+              <p class="mini-label">분할선 → 질문</p>
+              <h2 id="tree-title">의사결정 트리</h2>
+            </div>
+            <span id="question-count" class="question-count">질문 0개</span>
           </div>
           <div id="tree-stage" class="tree-stage" aria-live="polite"></div>
-          <p id="tree-message" class="tree-message">
-            질문을 확정하면 이곳에 질문 노드가 만들어집니다.
-          </p>
+          <div id="tree-guide" class="tree-guide">
+            분할선을 확정하면 이곳에 질문이 만들어집니다.
+          </div>
         </aside>
       </div>
     </section>
-
-    <section id="finish-screen" class="screen" aria-labelledby="finish-title">
-      <div class="finish-heading">
-        <div>
-          <p class="eyebrow">STEP 3 · 트리 완성</p>
-          <h1 id="finish-title">같은 과정을 반복해 트리를 완성했습니다</h1>
-        </div>
-        <div class="finish-badge"><span aria-hidden="true">✓</span> 모든 집단 분류 완료</div>
-      </div>
-
-      <div id="finish-content" class="finish-content">
-        <div class="final-tree-card">
-          <div class="panel-title-row">
-            <div>
-              <p class="mini-label">완성 결과</p>
-              <h2>의사결정 트리</h2>
-            </div>
-            <span class="legend">
-              <i class="legend-question"></i> 질문 노드
-              <i class="legend-leaf"></i> 리프 노드
-            </span>
-          </div>
-          <div id="final-tree" class="tree-stage final-tree"></div>
-        </div>
-
-        <div class="finish-side">
-          <div class="history-card">
-            <h2>사용한 질문 순서</h2>
-            <ol id="question-history"></ol>
-          </div>
-          <div class="summary-card">
-            <h2>핵심 정리</h2>
-            <ol>
-              <li><strong>엔트로피</strong>는 데이터가 섞인 정도를 나타낸다.</li>
-              <li><strong>정보이득</strong>은 질문으로 감소한 불확실성이다.</li>
-              <li><strong>ID3</strong>는 정보이득이 가장 큰 속성을 질문으로 선택한다.</li>
-              <li>같은 과정을 하위 노드에서 <strong>반복</strong>하면 트리가 완성된다.</li>
-              <li>하나의 <strong>분할 기준</strong>은 트리의 하나의 <strong>질문</strong>이 된다.</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
-      <div class="finish-actions">
-        <button id="restart-button" class="secondary-button" type="button">↻ 처음부터 다시</button>
-        <button id="focus-tree-button" class="primary-button" type="button">완성된 트리 보기</button>
-      </div>
-    </section>
   </main>
-
-  <template id="empty-tree-template">
-    <div class="empty-tree">
-      <div class="empty-node">?</div>
-      <strong>첫 질문을 기다리고 있습니다</strong>
-      <span>속성별 정보이득을 비교해 보세요.</span>
-    </div>
-  </template>
 
   <script src="script.js"></script>
 </body>
