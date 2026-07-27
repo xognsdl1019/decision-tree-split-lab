@@ -589,7 +589,7 @@ h2 {
 .plot-wrap {
   position: relative;
   width: 100%;
-  min-height: 390px;
+  min-height: 340px;
   border: 1px solid #d0dde5;
   border-radius: 14px;
   background: #fbfdff;
@@ -599,7 +599,7 @@ h2 {
 .scatter-svg {
   display: block;
   width: 100%;
-  height: 390px;
+  height: 340px;
   user-select: none;
 }
 
@@ -750,6 +750,22 @@ h2 {
   text-anchor: middle;
 }
 
+.plot-wrap.is-perfect .split-line-main {
+  stroke: var(--green);
+}
+
+.plot-wrap.is-perfect .split-handle {
+  stroke: var(--green);
+}
+
+.plot-wrap.is-perfect .split-handle-mark {
+  fill: var(--green);
+}
+
+.plot-wrap.is-perfect .line-caption rect {
+  fill: var(--green);
+}
+
 .candidate-controls {
   min-height: 34px;
   display: flex;
@@ -781,6 +797,70 @@ h2 {
   border-color: var(--orange);
   color: var(--orange-dark);
   background: var(--orange-soft);
+}
+
+.split-metrics {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 7px 0 9px;
+  padding: 7px 10px;
+  border: 2px solid #c8d8e3;
+  border-radius: 11px;
+  background: #f7fafc;
+}
+
+.metric-value {
+  min-width: 112px;
+  text-align: center;
+}
+
+.metric-value span,
+.metric-value strong {
+  display: block;
+}
+
+.metric-value span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.metric-value strong {
+  color: var(--navy);
+  font-size: 1.08rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-value.gain strong {
+  color: var(--blue-dark);
+}
+
+.metric-operator {
+  color: #718694;
+  font-size: 1.2rem;
+}
+
+.perfect-badge {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.split-metrics.is-perfect {
+  border-color: #62ba99;
+  background: var(--green-soft);
+}
+
+.split-metrics.is-perfect .metric-value.gain strong {
+  color: var(--green);
+  font-size: 1.25rem;
 }
 
 .group-summary {
@@ -858,6 +938,16 @@ h2 {
   background: #eef5f8;
   font-size: 0.79rem;
   font-weight: 800;
+}
+
+.action-guide.is-perfect {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.action-guide.is-error {
+  color: var(--orange-dark);
+  background: var(--orange-soft);
 }
 
 .compact {
@@ -1062,43 +1152,27 @@ button.group-node:hover {
   color: var(--orange-dark);
 }
 
-.subtree {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.leaf-node {
+  min-height: 88px;
+  border-width: 3px;
 }
 
-.subtree .question-node {
-  min-width: 130px;
-  max-width: 175px;
-  padding: 8px 9px;
-  font-size: 0.72rem;
+.leaf-node.is-buy {
+  border-color: var(--blue);
+  background: var(--blue-soft);
 }
 
-.subtree .tree-branches {
-  gap: 5px;
-  padding-top: 37px;
+.leaf-node.is-no {
+  border-color: var(--orange);
+  background: var(--orange-soft);
 }
 
-.subtree .tree-branches::before {
-  top: 18px;
+.leaf-node.is-buy small {
+  color: var(--blue-dark);
 }
 
-.subtree .tree-branch::before {
-  top: -19px;
-  height: 19px;
-}
-
-.subtree .branch-label {
-  margin-top: -31px;
-  margin-bottom: 8px;
-  font-size: 0.56rem;
-}
-
-.subtree .group-node {
-  min-height: 61px;
-  padding: 7px 5px;
+.leaf-node.is-no small {
+  color: var(--orange-dark);
 }
 
 @media (max-width: 1120px) {
@@ -1209,11 +1283,28 @@ button.group-node:hover {
   }
 
   .scatter-svg {
-    min-width: 620px;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 770 / 475;
   }
 
   .plot-wrap {
-    overflow-x: auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .split-metrics {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+  }
+
+  .metric-value {
+    min-width: 0;
+  }
+
+  .perfect-badge {
+    grid-column: 1 / -1;
+    justify-self: center;
   }
 
   .plot-actions {
@@ -1226,11 +1317,12 @@ button.group-node:hover {
   }
 
   .tree-stage {
-    min-width: 500px;
+    min-width: 0;
+    min-height: 360px;
   }
 
   .tree-panel {
-    overflow-x: auto;
+    overflow: hidden;
   }
 }
 

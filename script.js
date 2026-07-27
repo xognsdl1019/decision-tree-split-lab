@@ -6,15 +6,15 @@ const DATA = [
   { id: 3, age: "청년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
   { id: 4, age: "중년", income: "중간", student: "아니오", credit: "양호", result: "구매" },
   { id: 5, age: "중년", income: "낮음", student: "예", credit: "양호", result: "구매" },
-  { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "미구매" },
+  { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
   { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "구매" },
   { id: 8, age: "청소년", income: "중간", student: "아니오", credit: "양호", result: "미구매" },
-  { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "구매" },
+  { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "미구매" },
   { id: 10, age: "중년", income: "중간", student: "예", credit: "양호", result: "구매" },
-  { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "구매" },
+  { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "미구매" },
   { id: 12, age: "청년", income: "중간", student: "아니오", credit: "우수", result: "구매" },
   { id: 13, age: "청년", income: "높음", student: "예", credit: "양호", result: "구매" },
-  { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "미구매" }
+  { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "구매" }
 ];
 
 const AXES = {
@@ -51,12 +51,11 @@ const POINT_OFFSETS = [
 const state = {
   stage: "first",
   orientation: "vertical",
-  candidate: 1,
+  candidate: 2,
   firstSplit: null,
-  selectedGroup: null,
   scopeIds: DATA.map((row) => row.id),
-  secondSplit: null,
-  dragging: false
+  dragging: false,
+  feedback: ""
 };
 
 function recordsFromIds(ids) {
@@ -71,6 +70,41 @@ function counts(records) {
     purchase,
     noPurchase: records.length - purchase
   };
+}
+
+function entropy(records) {
+  if (!records.length) return 0;
+  const result = counts(records);
+  return [result.purchase, result.noPurchase].reduce((sum, count) => {
+    if (count === 0) return sum;
+    const probability = count / records.length;
+    return sum - probability * Math.log2(probability);
+  }, 0);
+}
+
+function splitMetrics(split) {
+  const beforeRecords = recordsFromIds(state.scopeIds);
+  const groupA = recordsFromIds(split.groups.A);
+  const groupB = recordsFromIds(split.groups.B);
+  const before = entropy(beforeRecords);
+  const entropyA = entropy(groupA);
+  const entropyB = entropy(groupB);
+  const after = (groupA.length / beforeRecords.length) * entropyA
+    + (groupB.length / beforeRecords.length) * entropyB;
+
+  return {
+    before,
+    entropyA,
+    entropyB,
+    after,
+    gain: before - after,
+    perfect: entropyA < 0.0005 && entropyB < 0.0005
+  };
+}
+
+function formatNumber(value) {
+  const normalized = Math.abs(value) < 0.0005 ? 0 : value;
+  return normalized.toFixed(3);
 }
 
 function getSplit(orientation, candidate, ids) {
@@ -102,30 +136,12 @@ function validCandidates(ids, orientation) {
   });
 }
 
-function firstValidOrientation(ids, preferred) {
-  const order = [preferred, preferred === "vertical" ? "horizontal" : "vertical"];
-  return order.find((orientation) => validCandidates(ids, orientation).length) || "vertical";
-}
-
 function currentSplit() {
   return getSplit(state.orientation, state.candidate, state.scopeIds);
 }
 
 function currentScopeBounds() {
-  if (state.stage === "first" || state.stage === "choose" || !state.firstSplit) {
-    return { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
-  }
-
-  const root = state.firstSplit;
-  const bounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
-  if (root.orientation === "vertical") {
-    if (state.selectedGroup === "A") bounds.x2 = root.coordinate;
-    else bounds.x1 = root.coordinate;
-  } else {
-    if (state.selectedGroup === "A") bounds.y1 = root.coordinate;
-    else bounds.y2 = root.coordinate;
-  }
-  return bounds;
+  return { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
 }
 
 function setScreen(screen) {
@@ -144,12 +160,11 @@ function setScreen(screen) {
 function resetExperience() {
   state.stage = "first";
   state.orientation = "vertical";
-  state.candidate = 1;
+  state.candidate = 2;
   state.firstSplit = null;
-  state.selectedGroup = null;
   state.scopeIds = DATA.map((row) => row.id);
-  state.secondSplit = null;
   state.dragging = false;
+  state.feedback = "";
   renderAll();
 }
 
@@ -269,39 +284,18 @@ function axesMarkup() {
 
 function renderPlot() {
   const plotWrap = document.getElementById("plot-wrap");
-  const current = currentSplit();
+  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
   const scopeBounds = currentScopeBounds();
-  const scopeSet = new Set(state.scopeIds);
-
-  let regions = "";
-  let lines = "";
-  if (state.stage === "first") {
-    regions = regionMarkup(current, scopeBounds);
-    lines = splitLineMarkup(current, scopeBounds, true);
-  } else if (state.stage === "choose") {
-    const rootBounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
-    regions = regionMarkup(state.firstSplit, rootBounds);
-    lines = splitLineMarkup(state.firstSplit, rootBounds, false);
-  } else {
-    const rootBounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
-    const second = state.stage === "complete" ? state.secondSplit : current;
-    regions = regionMarkup(second, scopeBounds);
-    lines = `
-      ${splitLineMarkup(state.firstSplit, rootBounds, false)}
-      ${splitLineMarkup(second, scopeBounds, state.stage === "second")}
-      <rect class="scope-outline" x="${scopeBounds.x1 + 2}" y="${scopeBounds.y1 + 2}"
-        width="${scopeBounds.x2 - scopeBounds.x1 - 4}" height="${scopeBounds.y2 - scopeBounds.y1 - 4}" rx="8"></rect>
-      <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">선택한 하위 집단</text>
-    `;
-  }
+  const regions = regionMarkup(split, scopeBounds);
+  const lines = splitLineMarkup(split, scopeBounds, state.stage === "first");
+  plotWrap.classList.toggle("is-perfect", splitMetrics(split).perfect);
 
   const cellCounts = new Map();
   const points = DATA.map((row) => {
     const cellKey = `${row.age}-${row.income}`;
     const index = cellCounts.get(cellKey) || 0;
     cellCounts.set(cellKey, index + 1);
-    const dimmed = (state.stage === "second" || state.stage === "complete") && !scopeSet.has(row.id);
-    return pointMarkup(row, pointPosition(row, index), dimmed);
+    return pointMarkup(row, pointPosition(row, index), false);
   }).join("");
 
   plotWrap.innerHTML = `
@@ -319,7 +313,7 @@ function renderPlot() {
 
 function renderOrientationControls() {
   const container = document.getElementById("orientation-controls");
-  if (state.stage === "choose" || state.stage === "complete") {
+  if (state.stage === "complete") {
     container.innerHTML = "";
     container.hidden = true;
     return;
@@ -340,6 +334,7 @@ function renderOrientationControls() {
     button.addEventListener("click", () => {
       state.orientation = button.dataset.orientation;
       state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
+      state.feedback = "";
       renderAll();
     });
   });
@@ -352,7 +347,7 @@ function candidateLabel(orientation, candidate) {
 
 function renderCandidateControls() {
   const container = document.getElementById("candidate-controls");
-  if (state.stage === "choose" || state.stage === "complete") {
+  if (state.stage === "complete") {
     container.innerHTML = "";
     container.hidden = true;
     return;
@@ -373,6 +368,7 @@ function renderCandidateControls() {
   container.querySelectorAll("[data-candidate]").forEach((button) => {
     button.addEventListener("click", () => {
       state.candidate = Number(button.dataset.candidate);
+      state.feedback = "";
       renderAll();
     });
   });
@@ -380,11 +376,12 @@ function renderCandidateControls() {
 
 function summaryCard(group, label, records) {
   const result = counts(records);
+  const groupEntropy = entropy(records);
   return `
     <article class="summary-group ${group.toLowerCase()}">
       <div class="summary-group-top">
         <strong>${group} 집단 · ${result.total}명</strong>
-        <em>${label}</em>
+        <em>${label} · H = ${formatNumber(groupEntropy)}</em>
       </div>
       <div class="summary-counts">
         <span class="buy-text">● 구매 ${result.purchase}</span>
@@ -394,16 +391,34 @@ function summaryCard(group, label, records) {
   `;
 }
 
+function renderSplitMetrics() {
+  const container = document.getElementById("split-metrics");
+  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
+  const metrics = splitMetrics(split);
+  container.classList.toggle("is-perfect", metrics.perfect);
+  container.innerHTML = `
+    <div class="metric-value">
+      <span>분할 전 엔트로피</span>
+      <strong>${formatNumber(metrics.before)}</strong>
+    </div>
+    <b class="metric-operator" aria-hidden="true">−</b>
+    <div class="metric-value">
+      <span>분할 후 엔트로피</span>
+      <strong>${formatNumber(metrics.after)}</strong>
+    </div>
+    <b class="metric-operator" aria-hidden="true">=</b>
+    <div class="metric-value gain">
+      <span>정보이득</span>
+      <strong>${formatNumber(metrics.gain)}</strong>
+    </div>
+    ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리!</span>' : ""}
+  `;
+}
+
 function renderGroupSummary() {
   const container = document.getElementById("group-summary");
-  if (state.stage === "choose") {
-    container.innerHTML = "";
-    container.hidden = true;
-    return;
-  }
-
   container.hidden = false;
-  const split = state.stage === "complete" ? state.secondSplit : currentSplit();
+  const split = state.stage === "complete" ? state.firstSplit : currentSplit();
   const groupA = recordsFromIds(split.groups.A);
   const groupB = recordsFromIds(split.groups.B);
   container.innerHTML = `
@@ -412,36 +427,16 @@ function renderGroupSummary() {
   `;
 }
 
-function groupNodeMarkup(ids, values, selectable, group, selected) {
-  const result = counts(recordsFromIds(ids));
-  const tag = selectable ? "button" : "div";
-  const attrs = selectable ? `type="button" data-select-group="${group}"` : "";
+function groupNodeMarkup(ids, values) {
+  const records = recordsFromIds(ids);
+  const result = counts(records);
+  const classification = result.purchase === result.total ? "구매" : "미구매";
+  const leafClass = classification === "구매" ? "is-buy" : "is-no";
   return `
-    <${tag} class="group-node ${selected ? "is-selected" : ""}" ${attrs}>
+    <div class="group-node leaf-node ${leafClass}">
       <strong>${values.join(" · ")}</strong>
-      <span>${result.total}명</span>
-      <small><i class="buy-text">● 구매 ${result.purchase}</i> · <i class="no-text">▲ 미구매 ${result.noPurchase}</i></small>
-    </${tag}>
-  `;
-}
-
-function secondSubtreeMarkup(split) {
-  return `
-    <div class="subtree">
-      <div class="question-node">
-        <small>두 번째 질문</small>
-        ${split.question}
-      </div>
-      <div class="tree-branches">
-        <div class="tree-branch">
-          <span class="branch-label">아니오</span>
-          ${groupNodeMarkup(split.groups.A, split.aValues, false, "A", false)}
-        </div>
-        <div class="tree-branch">
-          <span class="branch-label">예</span>
-          ${groupNodeMarkup(split.groups.B, split.bValues, false, "B", false)}
-        </div>
-      </div>
+      <span>리프 노드 · ${result.total}명</span>
+      <small>${classification === "구매" ? "●" : "▲"} 최종 분류: ${classification}</small>
     </div>
   `;
 }
@@ -465,15 +460,8 @@ function renderTree() {
     return;
   }
 
-  questionCount.textContent = `질문 ${state.secondSplit ? 2 : 1}개`;
+  questionCount.textContent = "질문 1개";
   const root = state.firstSplit;
-  const selectable = state.stage === "choose";
-  const branchA = state.secondSplit && state.selectedGroup === "A"
-    ? secondSubtreeMarkup(state.secondSplit)
-    : groupNodeMarkup(root.groups.A, root.aValues, selectable, "A", state.stage === "second" && state.selectedGroup === "A");
-  const branchB = state.secondSplit && state.selectedGroup === "B"
-    ? secondSubtreeMarkup(state.secondSplit)
-    : groupNodeMarkup(root.groups.B, root.bValues, selectable, "B", state.stage === "second" && state.selectedGroup === "B");
 
   treeStage.innerHTML = `
     <div class="tree-root">
@@ -484,28 +472,18 @@ function renderTree() {
       <div class="tree-branches">
         <div class="tree-branch">
           <span class="branch-label">아니오</span>
-          ${branchA}
+          ${groupNodeMarkup(root.groups.A, root.aValues)}
         </div>
         <div class="tree-branch">
           <span class="branch-label">예</span>
-          ${branchB}
+          ${groupNodeMarkup(root.groups.B, root.bValues)}
         </div>
       </div>
     </div>
   `;
 
   treeGuide.classList.add("is-active");
-  if (state.stage === "choose") {
-    treeGuide.textContent = "두 집단 중 한 곳을 눌러 다시 나누어 보세요.";
-  } else if (state.stage === "second") {
-    treeGuide.textContent = "선택한 하위 집단에서 두 번째 분할선을 움직이고 있습니다.";
-  } else {
-    treeGuide.textContent = "분할선 두 개가 질문 두 개로 바뀌며 트리가 성장했습니다.";
-  }
-
-  treeStage.querySelectorAll("[data-select-group]").forEach((button) => {
-    button.addEventListener("click", () => selectSubgroup(button.dataset.selectGroup));
-  });
+  treeGuide.textContent = "양쪽 집단의 엔트로피가 0이어서 바로 결과 리프가 되었습니다.";
 }
 
 function renderStageText() {
@@ -515,29 +493,30 @@ function renderStageText() {
   const completion = document.getElementById("completion-banner");
 
   const stageText = {
-    first: "첫 번째 분할",
-    choose: "하위 집단 선택",
-    second: "두 번째 분할",
-    complete: "체험 완료"
+    first: "분할선 탐색",
+    complete: "완전 분리"
   };
   chip.textContent = stageText[state.stage];
   completion.hidden = state.stage !== "complete";
+  guide.classList.remove("is-error", "is-perfect");
 
   if (state.stage === "first") {
-    guide.textContent = "분할선을 직접 잡아 움직이거나 아래 후보를 눌러 보세요.";
+    const metrics = splitMetrics(currentSplit());
+    if (state.feedback) {
+      guide.textContent = state.feedback;
+      guide.classList.add("is-error");
+    } else if (metrics.perfect) {
+      guide.textContent = "두 집단의 엔트로피가 모두 0입니다. 이 분할선을 확정하세요.";
+      guide.classList.add("is-perfect");
+    } else {
+      guide.textContent = "선을 움직여 두 집단의 엔트로피가 모두 0이 되는 위치를 찾아보세요.";
+    }
     confirm.hidden = false;
     confirm.disabled = false;
     confirm.textContent = "이 분할선 확정";
-  } else if (state.stage === "choose") {
-    guide.textContent = "오른쪽 트리에서 다시 나누고 싶은 집단을 선택하세요.";
-    confirm.hidden = true;
-  } else if (state.stage === "second") {
-    guide.textContent = "선택한 집단 안에서 두 번째 분할선을 움직여 보세요.";
-    confirm.hidden = false;
-    confirm.disabled = false;
-    confirm.textContent = "두 번째 분할 확정";
   } else {
-    guide.textContent = "하나의 선이 하나의 질문으로 바뀌는 과정을 확인했습니다.";
+    guide.textContent = `정보이득 ${formatNumber(splitMetrics(state.firstSplit).gain)}만큼 불확실성이 줄어 두 결과가 완전히 분리되었습니다.`;
+    guide.classList.add("is-perfect");
     confirm.hidden = true;
   }
 
@@ -553,6 +532,7 @@ function renderAll() {
   renderOrientationControls();
   renderPlot();
   renderCandidateControls();
+  renderSplitMetrics();
   renderGroupSummary();
   renderTree();
   renderStageText();
@@ -560,27 +540,18 @@ function renderAll() {
 
 function confirmCurrentSplit() {
   if (state.stage === "first") {
-    state.firstSplit = currentSplit();
-    state.stage = "choose";
-    renderAll();
-    return;
-  }
-
-  if (state.stage === "second") {
-    state.secondSplit = currentSplit();
+    const split = currentSplit();
+    const metrics = splitMetrics(split);
+    if (!metrics.perfect) {
+      state.feedback = "아직 구매와 미구매가 섞여 있습니다. 엔트로피가 0이 되는 위치를 찾아보세요.";
+      renderAll();
+      return;
+    }
+    state.firstSplit = split;
+    state.feedback = "";
     state.stage = "complete";
     renderAll();
   }
-}
-
-function selectSubgroup(group) {
-  state.selectedGroup = group;
-  state.scopeIds = [...state.firstSplit.groups[group]];
-  const preferred = state.firstSplit.orientation === "vertical" ? "horizontal" : "vertical";
-  state.orientation = firstValidOrientation(state.scopeIds, preferred);
-  state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
-  state.stage = "second";
-  renderAll();
 }
 
 function svgPoint(event, svg) {
@@ -619,7 +590,7 @@ function updateDragPreview(coordinate) {
 }
 
 function bindDragEvents() {
-  if (state.stage !== "first" && state.stage !== "second") return;
+  if (state.stage !== "first") return;
   const svg = document.getElementById("scatter-svg");
   const lineGroup = document.getElementById("active-split-line");
   if (!svg || !lineGroup) return;
@@ -651,6 +622,7 @@ function bindDragEvents() {
       return Math.abs(coordinate - raw) < Math.abs(coordinates[best] - raw) ? index : best;
     }, 0);
     state.candidate = candidates[nearestIndex];
+    state.feedback = "";
     renderAll();
   });
 
@@ -662,6 +634,7 @@ function bindDragEvents() {
     const forward = event.key === "ArrowRight" || event.key === "ArrowUp";
     const nextIndex = Math.max(0, Math.min(candidates.length - 1, currentIndex + (forward ? 1 : -1)));
     state.candidate = candidates[nextIndex];
+    state.feedback = "";
     renderAll();
     document.getElementById("active-split-line")?.focus();
   });
