@@ -52,7 +52,7 @@ const state = {
   stage: "first",
   orientation: "vertical",
   candidate: 1,
-  evaluatedKey: null,
+  evaluatedKeys: new Set(),
   firstSplit: null,
   selectedGroup: null,
   scopeIds: DATA.map((row) => row.id),
@@ -160,11 +160,10 @@ function currentEvaluationKey() {
 }
 
 function isCurrentSplitEvaluated() {
-  return state.stage === "complete" || state.evaluatedKey === currentEvaluationKey();
+  return state.stage === "complete" || state.evaluatedKeys.has(currentEvaluationKey());
 }
 
-function clearCurrentEvaluation() {
-  state.evaluatedKey = null;
+function clearSelectionFeedback() {
   state.feedback = "";
 }
 
@@ -201,7 +200,7 @@ function resetExperience() {
   state.stage = "first";
   state.orientation = "vertical";
   state.candidate = 1;
-  state.evaluatedKey = null;
+  state.evaluatedKeys.clear();
   state.firstSplit = null;
   state.selectedGroup = null;
   state.scopeIds = DATA.map((row) => row.id);
@@ -218,8 +217,8 @@ function pointPosition(row, cellIndex) {
   return { x: x + offset[0], y: y + offset[1] };
 }
 
-function pointMarkup(row, position, isDimmed) {
-  const commonClass = `data-point ${isDimmed ? "is-dimmed" : ""}`;
+function pointMarkup(row, position) {
+  const commonClass = "data-point";
   const tooltip = `고객 ${row.id}: ${row.age}, 수입 ${row.income}, ${row.student === "예" ? "학생" : "비학생"}, 신용 ${row.credit}, ${row.result}`;
   if (row.result === "구매") {
     return `
@@ -271,7 +270,8 @@ function splitLineMarkup(split, bounds, options = {}) {
     active = false,
     selected = false,
     candidateNumber = null,
-    stageNumber = null
+    stageNumber = null,
+    gain = null
   } = options;
   const number = candidateNumber ?? stageNumber;
   const colorNumber = candidateNumber ?? stageNumber ?? 1;
@@ -281,6 +281,7 @@ function splitLineMarkup(split, bounds, options = {}) {
     "split-line-group",
     selected ? "is-selected" : "",
     active ? "is-active" : "",
+    gain !== null ? "is-evaluated" : "",
     stageNumber ? "is-fixed" : ""
   ].filter(Boolean).join(" ");
   const tabIndex = active
@@ -298,6 +299,7 @@ function splitLineMarkup(split, bounds, options = {}) {
         <line class="split-line-hit" x1="${split.coordinate}" y1="${bounds.y1}" x2="${split.coordinate}" y2="${bounds.y2}"></line>
         <line class="split-line-main" x1="${split.coordinate}" y1="${bounds.y1}" x2="${split.coordinate}" y2="${bounds.y2}"></line>
         ${lineNumberMarkup(split.coordinate, bounds.y1 + 18, badgeLabel, Boolean(stageNumber))}
+        ${gain === null ? "" : gainBadgeMarkup(split.coordinate, bounds.y1 + 55, gain)}
         ${active ? `
           <circle class="split-handle" cx="${split.coordinate}" cy="${midY}" r="16"></circle>
           <text class="split-handle-mark" x="${split.coordinate}" y="${midY + 5}">↔</text>
@@ -313,6 +315,7 @@ function splitLineMarkup(split, bounds, options = {}) {
       <line class="split-line-hit" x1="${bounds.x1}" y1="${split.coordinate}" x2="${bounds.x2}" y2="${split.coordinate}"></line>
       <line class="split-line-main" x1="${bounds.x1}" y1="${split.coordinate}" x2="${bounds.x2}" y2="${split.coordinate}"></line>
       ${lineNumberMarkup(bounds.x2 - 24, split.coordinate, badgeLabel, Boolean(stageNumber))}
+      ${gain === null ? "" : gainBadgeMarkup(bounds.x2 - 92, split.coordinate - 23, gain)}
       ${active ? `
         <circle class="split-handle" cx="${midX}" cy="${split.coordinate}" r="16"></circle>
         <text class="split-handle-mark" x="${midX}" y="${split.coordinate + 5}">↕</text>
@@ -331,14 +334,28 @@ function lineNumberMarkup(x, y, label, isStageLabel = false) {
   `;
 }
 
+function gainBadgeMarkup(x, y, gain) {
+  return `
+    <g class="line-gain-badge">
+      <rect x="${x - 58}" y="${y - 14}" width="116" height="28" rx="14"></rect>
+      <text x="${x}" y="${y + 5}">정보이득 ${formatNumber(gain)}</text>
+    </g>
+  `;
+}
+
 function selectableLinesMarkup(bounds) {
   return validCandidates(state.scopeIds, state.orientation).map((candidate) => {
     const split = getSplit(state.orientation, candidate, state.scopeIds);
     const selected = candidate === state.candidate;
+    const evaluationKey = `${state.stage}:${state.orientation}:${candidate}`;
+    const gain = state.evaluatedKeys.has(evaluationKey)
+      ? splitMetrics(split, state.scopeIds).gain
+      : null;
     return splitLineMarkup(split, bounds, {
       active: selected,
       selected,
-      candidateNumber: candidate
+      candidateNumber: candidate,
+      gain
     });
   }).join("");
 }
@@ -362,7 +379,6 @@ function axesMarkup() {
 function renderPlot() {
   const plotWrap = document.getElementById("plot-wrap");
   const scopeBounds = currentScopeBounds();
-  const scopeSet = new Set(state.scopeIds);
   let regions = "";
   let lines = "";
   let displayedSplit = currentSplit();
@@ -397,12 +413,12 @@ function renderPlot() {
   );
 
   const cellCounts = new Map();
-  const points = DATA.map((row) => {
+  const pointRows = state.stage === "second" ? recordsFromIds(state.scopeIds) : DATA;
+  const points = pointRows.map((row) => {
     const cellKey = `${row.age}-${row.income}`;
     const index = cellCounts.get(cellKey) || 0;
     cellCounts.set(cellKey, index + 1);
-    const dimmed = state.stage !== "first" && !scopeSet.has(row.id);
-    return pointMarkup(row, pointPosition(row, index), dimmed);
+    return pointMarkup(row, pointPosition(row, index));
   }).join("");
 
   plotWrap.innerHTML = `
@@ -446,7 +462,7 @@ function renderOrientationControls() {
     button.addEventListener("click", () => {
       state.orientation = button.dataset.orientation;
       state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
-      clearCurrentEvaluation();
+      clearSelectionFeedback();
       renderAll();
     });
   });
@@ -481,7 +497,7 @@ function renderCandidateControls() {
   container.querySelectorAll("[data-candidate]").forEach((button) => {
     button.addEventListener("click", () => {
       state.candidate = Number(button.dataset.candidate);
-      clearCurrentEvaluation();
+      clearSelectionFeedback();
       renderAll();
     });
   });
@@ -739,7 +755,7 @@ function renderAll() {
 
 function confirmCurrentSplit() {
   if (!isCurrentSplitEvaluated()) {
-    state.evaluatedKey = currentEvaluationKey();
+    state.evaluatedKeys.add(currentEvaluationKey());
     state.feedback = "";
     renderAll();
     return;
@@ -765,7 +781,6 @@ function confirmCurrentSplit() {
     state.scopeIds = [...split.groups[state.selectedGroup]];
     state.orientation = split.orientation === "vertical" ? "horizontal" : "vertical";
     state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
-    state.evaluatedKey = null;
     state.feedback = "";
     state.stage = "second";
     renderAll();
@@ -834,7 +849,7 @@ function bindDragEvents() {
       const candidate = Number(candidateLine.dataset.candidateLine);
       if (candidate === state.candidate) return;
       state.candidate = candidate;
-      clearCurrentEvaluation();
+      clearSelectionFeedback();
       renderAll();
     };
     candidateLine.addEventListener("click", selectCandidate);
@@ -872,7 +887,7 @@ function bindDragEvents() {
       return Math.abs(coordinate - raw) < Math.abs(coordinates[best] - raw) ? index : best;
     }, 0);
     state.candidate = candidates[nearestIndex];
-    clearCurrentEvaluation();
+    clearSelectionFeedback();
     renderAll();
   });
 
@@ -884,7 +899,7 @@ function bindDragEvents() {
     const forward = event.key === "ArrowRight" || event.key === "ArrowUp";
     const nextIndex = Math.max(0, Math.min(candidates.length - 1, currentIndex + (forward ? 1 : -1)));
     state.candidate = candidates[nextIndex];
-    clearCurrentEvaluation();
+    clearSelectionFeedback();
     renderAll();
     document.getElementById("active-split-line")?.focus();
   });
