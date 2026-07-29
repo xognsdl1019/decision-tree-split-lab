@@ -330,7 +330,7 @@ function renderPlot() {
       ${splitLineMarkup(displayedSplit, scopeBounds, state.stage === "second")}
       <rect class="scope-outline" x="${scopeBounds.x1 + 2}" y="${scopeBounds.y1 + 2}"
         width="${scopeBounds.x2 - scopeBounds.x1 - 4}" height="${scopeBounds.y2 - scopeBounds.y1 - 4}" rx="8"></rect>
-      <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">다시 나누는 혼합 집단</text>
+      <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">재분할 집단</text>
     `;
   }
   plotWrap.classList.toggle("is-perfect", state.stage !== "first" && splitMetrics(displayedSplit).perfect);
@@ -407,7 +407,7 @@ function renderCandidateControls() {
   container.hidden = false;
   const candidates = validCandidates(state.scopeIds, state.orientation);
   container.innerHTML = `
-    <span>선의 위치</span>
+    <span>분할 후보</span>
     ${candidates.map((candidate) => `
       <button class="candidate-button ${state.candidate === candidate ? "is-active" : ""}"
         type="button" data-candidate="${candidate}">
@@ -431,7 +431,7 @@ function summaryCard(group, label, records) {
   return `
     <article class="summary-group ${group.toLowerCase()}">
       <div class="summary-group-top">
-        <strong>${group} 집단 · ${result.total}명</strong>
+        <strong>${group} · ${result.total}명</strong>
         <em>${label} · H = ${formatNumber(groupEntropy)}</em>
       </div>
       <div class="summary-counts">
@@ -462,7 +462,7 @@ function renderSplitMetrics() {
       <span>정보이득</span>
       <strong>${formatNumber(metrics.gain)}</strong>
     </div>
-    ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리!</span>' : ""}
+    ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리</span>' : ""}
   `;
 }
 
@@ -486,7 +486,7 @@ function groupNodeMarkup(ids, values) {
     return `
       <div class="group-node mixed-node is-selected">
         <strong>${values.join(" · ")}</strong>
-        <span>혼합 집단 · ${result.total}명 · H ${formatNumber(groupEntropy)}</span>
+        <span>혼합 · ${result.total}명 · H ${formatNumber(groupEntropy)}</span>
         <small><i class="buy-text">● 구매 ${result.purchase}</i> · <i class="no-text">▲ 미구매 ${result.noPurchase}</i></small>
       </div>
     `;
@@ -497,8 +497,8 @@ function groupNodeMarkup(ids, values) {
   return `
     <div class="group-node leaf-node ${leafClass}">
       <strong>${values.join(" · ")}</strong>
-      <span>리프 노드 · ${result.total}명</span>
-      <small>${classification === "구매" ? "●" : "▲"} 최종 분류: ${classification}</small>
+      <span>리프 · ${result.total}명</span>
+      <small>${classification === "구매" ? "●" : "▲"} 결과 · ${classification}</small>
     </div>
   `;
 }
@@ -508,7 +508,7 @@ function secondSubtreeMarkup(split) {
   return `
     <div class="subtree">
       <div class="question-node">
-        <small>두 번째 질문 · Gain ${formatNumber(metrics.gain)}</small>
+        <small>두 번째 질문 · 정보이득 ${formatNumber(metrics.gain)}</small>
         ${split.question}
       </div>
       <div class="tree-branches">
@@ -535,12 +535,12 @@ function renderTree() {
     treeStage.innerHTML = `
       <div class="empty-tree">
         <div class="empty-question">?</div>
-        <strong>아직 질문이 없습니다</strong>
-        <small>왼쪽의 분할선을 먼저 움직여 보세요.</small>
+        <strong>질문 없음</strong>
+        <small>분할선 확정 대기</small>
       </div>
     `;
     treeGuide.classList.remove("is-active");
-    treeGuide.textContent = "분할선을 확정하면 이곳에 질문이 만들어집니다.";
+    treeGuide.textContent = "분할선 확정 → 질문 생성";
     return;
   }
 
@@ -557,7 +557,7 @@ function renderTree() {
   treeStage.innerHTML = `
     <div class="tree-root">
       <div class="question-node">
-        <small>첫 번째 질문 · Gain ${formatNumber(rootMetrics.gain)}</small>
+        <small>첫 번째 질문 · 정보이득 ${formatNumber(rootMetrics.gain)}</small>
         ${root.question}
       </div>
       <div class="tree-branches">
@@ -575,8 +575,8 @@ function renderTree() {
 
   treeGuide.classList.add("is-active");
   treeGuide.textContent = state.stage === "second"
-    ? "아직 섞여 있는 집단을 이번에는 Y축 수입으로 다시 나눕니다."
-    : "두 번의 분할이 두 개의 질문이 되어 세 개의 결과 리프를 만들었습니다.";
+    ? "혼합 집단 → 수입으로 재분할"
+    : "질문 2개 → 리프 3개";
 }
 
 function renderStageText() {
@@ -602,32 +602,32 @@ function renderStageText() {
       guide.textContent = state.feedback;
       guide.classList.add("is-error");
     } else if (isBest) {
-      guide.textContent = "첫 번째 질문으로 가장 많이 섞임을 줄이는 위치입니다. 이 분할선을 확정하세요.";
+      guide.textContent = "최적 분할 · 정보이득 최대";
       guide.classList.add("is-perfect");
     } else {
-      guide.textContent = "X축과 Y축의 선을 움직이며 정보이득이 더 커지는 위치를 찾아보세요.";
+      guide.textContent = "목표 · 정보이득이 큰 위치";
     }
     confirm.hidden = false;
     confirm.disabled = false;
-    confirm.textContent = "첫 번째 분할 확정";
+    confirm.textContent = "1차 분할 확정";
   } else if (state.stage === "second") {
     const metrics = splitMetrics(currentSplit());
     if (state.feedback) {
       guide.textContent = state.feedback;
       guide.classList.add("is-error");
     } else if (metrics.perfect) {
-      guide.textContent = "남은 혼합 집단도 엔트로피 0으로 완전히 나뉘었습니다. 두 번째 선을 확정하세요.";
+      guide.textContent = "완전 분리 · 엔트로피 0";
       guide.classList.add("is-perfect");
     } else {
-      guide.textContent = "강조된 혼합 집단 안에서 Y축 분할선을 움직여 보세요.";
+      guide.textContent = "혼합 집단 · 수입 분할";
     }
     confirm.hidden = false;
     confirm.disabled = false;
-    confirm.textContent = "두 번째 분할 확정";
+    confirm.textContent = "2차 분할 확정";
   } else {
     const firstGain = splitMetrics(state.firstSplit, DATA.map((row) => row.id)).gain;
     const secondGain = splitMetrics(state.secondSplit, state.scopeIds).gain;
-    guide.textContent = `첫 질문 Gain ${formatNumber(firstGain)} → 두 번째 질문 Gain ${formatNumber(secondGain)}으로 모든 리프가 완성되었습니다.`;
+    guide.textContent = `정보이득 ${formatNumber(firstGain)} → ${formatNumber(secondGain)} · 리프 완성`;
     guide.classList.add("is-perfect");
     confirm.hidden = true;
   }
@@ -656,7 +656,7 @@ function confirmCurrentSplit() {
     const metrics = splitMetrics(split);
     const best = bestSplitForScope(state.scopeIds);
     if (Math.abs(metrics.gain - best.metrics.gain) >= 0.0005) {
-      state.feedback = "이 위치보다 정보이득이 더 큰 분할이 있습니다. 선을 한 번 더 움직여 비교해 보세요.";
+      state.feedback = "더 큰 정보이득의 분할 후보 존재";
       renderAll();
       return;
     }
@@ -681,7 +681,7 @@ function confirmCurrentSplit() {
     const split = currentSplit();
     const metrics = splitMetrics(split);
     if (!metrics.perfect) {
-      state.feedback = "아직 선택한 집단에 구매와 미구매가 섞여 있습니다. Y축 선을 다른 위치로 옮겨보세요.";
+      state.feedback = "혼합 상태 유지 · 다른 위치 선택";
       renderAll();
       return;
     }
