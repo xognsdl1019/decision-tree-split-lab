@@ -52,6 +52,7 @@ const state = {
   stage: "first",
   orientation: "vertical",
   candidate: 1,
+  evaluatedKey: null,
   firstSplit: null,
   selectedGroup: null,
   scopeIds: DATA.map((row) => row.id),
@@ -154,6 +155,19 @@ function currentSplit() {
   return getSplit(state.orientation, state.candidate, state.scopeIds);
 }
 
+function currentEvaluationKey() {
+  return `${state.stage}:${state.orientation}:${state.candidate}`;
+}
+
+function isCurrentSplitEvaluated() {
+  return state.stage === "complete" || state.evaluatedKey === currentEvaluationKey();
+}
+
+function clearCurrentEvaluation() {
+  state.evaluatedKey = null;
+  state.feedback = "";
+}
+
 function currentScopeBounds() {
   const bounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
   if ((state.stage !== "second" && state.stage !== "complete") || !state.firstSplit) {
@@ -187,6 +201,7 @@ function resetExperience() {
   state.stage = "first";
   state.orientation = "vertical";
   state.candidate = 1;
+  state.evaluatedKey = null;
   state.firstSplit = null;
   state.selectedGroup = null;
   state.scopeIds = DATA.map((row) => row.id);
@@ -251,21 +266,41 @@ function regionLabelMarkup(group, x, y) {
   `;
 }
 
-function splitLineMarkup(split, bounds, active) {
-  const fixedClass = active ? "" : "is-fixed";
-  const id = active ? "active-split-line" : "fixed-split-line";
-  const tabIndex = active ? 'tabindex="0" role="slider" aria-label="분할선 위치"' : "";
+function splitLineMarkup(split, bounds, options = {}) {
+  const {
+    active = false,
+    selected = false,
+    candidateNumber = null,
+    stageNumber = null
+  } = options;
+  const number = candidateNumber ?? stageNumber;
+  const colorNumber = candidateNumber ?? stageNumber ?? 1;
+  const id = active ? 'id="active-split-line"' : "";
+  const dataCandidate = candidateNumber ? `data-candidate-line="${candidateNumber}"` : "";
+  const classes = [
+    "split-line-group",
+    selected ? "is-selected" : "",
+    active ? "is-active" : "",
+    stageNumber ? "is-fixed" : ""
+  ].filter(Boolean).join(" ");
+  const tabIndex = active
+    ? 'tabindex="0" role="slider" aria-label="선택한 분할선 위치"'
+    : candidateNumber
+      ? `tabindex="0" role="button" aria-label="${candidateNumber}번 분할선 선택"`
+      : "";
+  const badgeLabel = stageNumber ? `${stageNumber}차` : `${number}`;
 
   if (split.orientation === "vertical") {
     const midY = (bounds.y1 + bounds.y2) / 2;
     return `
-      <g id="${id}" class="split-line-group ${fixedClass}" ${tabIndex}>
+      <g ${id} class="${classes}" ${dataCandidate} ${tabIndex}
+        style="--split-color: var(--candidate-${colorNumber})">
         <line class="split-line-hit" x1="${split.coordinate}" y1="${bounds.y1}" x2="${split.coordinate}" y2="${bounds.y2}"></line>
         <line class="split-line-main" x1="${split.coordinate}" y1="${bounds.y1}" x2="${split.coordinate}" y2="${bounds.y2}"></line>
+        ${lineNumberMarkup(split.coordinate, bounds.y1 + 18, badgeLabel, Boolean(stageNumber))}
         ${active ? `
           <circle class="split-handle" cx="${split.coordinate}" cy="${midY}" r="16"></circle>
           <text class="split-handle-mark" x="${split.coordinate}" y="${midY + 5}">↔</text>
-          ${lineCaptionMarkup(split.coordinate, bounds.y1 + 17)}
         ` : ""}
       </g>
     `;
@@ -273,25 +308,39 @@ function splitLineMarkup(split, bounds, active) {
 
   const midX = (bounds.x1 + bounds.x2) / 2;
   return `
-    <g id="${id}" class="split-line-group ${fixedClass}" ${tabIndex}>
+    <g ${id} class="${classes}" ${dataCandidate} ${tabIndex}
+      style="--split-color: var(--candidate-${colorNumber})">
       <line class="split-line-hit" x1="${bounds.x1}" y1="${split.coordinate}" x2="${bounds.x2}" y2="${split.coordinate}"></line>
       <line class="split-line-main" x1="${bounds.x1}" y1="${split.coordinate}" x2="${bounds.x2}" y2="${split.coordinate}"></line>
+      ${lineNumberMarkup(bounds.x2 - 24, split.coordinate, badgeLabel, Boolean(stageNumber))}
       ${active ? `
         <circle class="split-handle" cx="${midX}" cy="${split.coordinate}" r="16"></circle>
         <text class="split-handle-mark" x="${midX}" y="${split.coordinate + 5}">↕</text>
-        ${lineCaptionMarkup(bounds.x2 - 39, split.coordinate)}
       ` : ""}
     </g>
   `;
 }
 
-function lineCaptionMarkup(x, y) {
+function lineNumberMarkup(x, y, label, isStageLabel = false) {
+  const width = isStageLabel ? 48 : 30;
   return `
-    <g class="line-caption">
-      <rect x="${x - 34}" y="${y - 13}" width="68" height="26" rx="7"></rect>
-      <text x="${x}" y="${y + 4}">분할선</text>
+    <g class="line-number ${isStageLabel ? "is-stage-label" : ""}">
+      <rect x="${x - width / 2}" y="${y - 15}" width="${width}" height="30" rx="15"></rect>
+      <text x="${x}" y="${y + 5}">${label}</text>
     </g>
   `;
+}
+
+function selectableLinesMarkup(bounds) {
+  return validCandidates(state.scopeIds, state.orientation).map((candidate) => {
+    const split = getSplit(state.orientation, candidate, state.scopeIds);
+    const selected = candidate === state.candidate;
+    return splitLineMarkup(split, bounds, {
+      active: selected,
+      selected,
+      candidateNumber: candidate
+    });
+  }).join("");
 }
 
 function axesMarkup() {
@@ -320,20 +369,32 @@ function renderPlot() {
 
   if (state.stage === "first") {
     regions = regionMarkup(displayedSplit, scopeBounds);
-    lines = splitLineMarkup(displayedSplit, scopeBounds, true);
+    lines = selectableLinesMarkup(scopeBounds);
+  } else if (state.stage === "second") {
+    displayedSplit = currentSplit();
+    regions = regionMarkup(displayedSplit, scopeBounds);
+    lines = `
+      ${selectableLinesMarkup(scopeBounds)}
+      <rect class="scope-outline" x="${scopeBounds.x1 + 2}" y="${scopeBounds.y1 + 2}"
+        width="${scopeBounds.x2 - scopeBounds.x1 - 4}" height="${scopeBounds.y2 - scopeBounds.y1 - 4}" rx="8"></rect>
+      <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">재분할 집단</text>
+    `;
   } else {
-    displayedSplit = state.stage === "complete" ? state.secondSplit : currentSplit();
+    displayedSplit = state.secondSplit;
     const rootBounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
     regions = regionMarkup(displayedSplit, scopeBounds);
     lines = `
-      ${splitLineMarkup(state.firstSplit, rootBounds, false)}
-      ${splitLineMarkup(displayedSplit, scopeBounds, state.stage === "second")}
+      ${splitLineMarkup(state.firstSplit, rootBounds, { stageNumber: 1 })}
+      ${splitLineMarkup(displayedSplit, scopeBounds, { stageNumber: 2 })}
       <rect class="scope-outline" x="${scopeBounds.x1 + 2}" y="${scopeBounds.y1 + 2}"
         width="${scopeBounds.x2 - scopeBounds.x1 - 4}" height="${scopeBounds.y2 - scopeBounds.y1 - 4}" rx="8"></rect>
       <text class="scope-caption" x="${scopeBounds.x1 + 10}" y="${scopeBounds.y2 - 10}">재분할 집단</text>
     `;
   }
-  plotWrap.classList.toggle("is-perfect", state.stage !== "first" && splitMetrics(displayedSplit).perfect);
+  plotWrap.classList.toggle(
+    "is-perfect",
+    isCurrentSplitEvaluated() && state.stage !== "first" && splitMetrics(displayedSplit).perfect
+  );
 
   const cellCounts = new Map();
   const points = DATA.map((row) => {
@@ -385,7 +446,7 @@ function renderOrientationControls() {
     button.addEventListener("click", () => {
       state.orientation = button.dataset.orientation;
       state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
-      state.feedback = "";
+      clearCurrentEvaluation();
       renderAll();
     });
   });
@@ -409,9 +470,10 @@ function renderCandidateControls() {
   container.innerHTML = `
     <span>분할 후보</span>
     ${candidates.map((candidate) => `
-      <button class="candidate-button ${state.candidate === candidate ? "is-active" : ""}"
+      <button class="candidate-button candidate-${candidate} ${state.candidate === candidate ? "is-active" : ""}"
         type="button" data-candidate="${candidate}">
-        ${candidateLabel(state.orientation, candidate)}
+        <b>${candidate}</b>
+        <span>${candidateLabel(state.orientation, candidate)}</span>
       </button>
     `).join("")}
   `;
@@ -419,7 +481,7 @@ function renderCandidateControls() {
   container.querySelectorAll("[data-candidate]").forEach((button) => {
     button.addEventListener("click", () => {
       state.candidate = Number(button.dataset.candidate);
-      state.feedback = "";
+      clearCurrentEvaluation();
       renderAll();
     });
   });
@@ -444,8 +506,21 @@ function summaryCard(group, label, records) {
 
 function renderSplitMetrics() {
   const container = document.getElementById("split-metrics");
+  if (!isCurrentSplitEvaluated()) {
+    container.classList.remove("is-perfect");
+    container.classList.add("is-pending");
+    container.innerHTML = `
+      <div class="metrics-pending">
+        <strong>정보이득은 아직 공개되지 않았습니다.</strong>
+        <span>분할선 번호 선택 → ‘분할’ 클릭</span>
+      </div>
+    `;
+    return;
+  }
+
   const split = state.stage === "complete" ? state.secondSplit : currentSplit();
   const metrics = splitMetrics(split);
+  container.classList.remove("is-pending");
   container.classList.toggle("is-perfect", metrics.perfect);
   container.innerHTML = `
     <div class="metric-value">
@@ -468,6 +543,12 @@ function renderSplitMetrics() {
 
 function renderGroupSummary() {
   const container = document.getElementById("group-summary");
+  if (!isCurrentSplitEvaluated()) {
+    container.innerHTML = "";
+    container.hidden = true;
+    return;
+  }
+
   container.hidden = false;
   const split = state.stage === "complete" ? state.secondSplit : currentSplit();
   const groupA = recordsFromIds(split.groups.A);
@@ -595,35 +676,41 @@ function renderStageText() {
   guide.classList.remove("is-error", "is-perfect");
 
   if (state.stage === "first") {
-    const metrics = splitMetrics(currentSplit());
-    const best = bestSplitForScope(state.scopeIds);
-    const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
     if (state.feedback) {
       guide.textContent = state.feedback;
       guide.classList.add("is-error");
-    } else if (isBest) {
-      guide.textContent = "최적 분할 · 정보이득 최대";
-      guide.classList.add("is-perfect");
+    } else if (!isCurrentSplitEvaluated()) {
+      guide.textContent = "몇 번 분할선으로 나눌까요?";
     } else {
-      guide.textContent = "목표 · 정보이득이 큰 위치";
+      const metrics = splitMetrics(currentSplit());
+      const best = bestSplitForScope(state.scopeIds);
+      const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
+      guide.textContent = isBest
+        ? "정보이득 최대 · 이 분할로 진행"
+        : "정보이득 확인 · 다른 분할선과 비교";
+      guide.classList.toggle("is-perfect", isBest);
     }
     confirm.hidden = false;
     confirm.disabled = false;
-    confirm.textContent = "1차 분할 확정";
+    confirm.textContent = isCurrentSplitEvaluated() ? "1차 분할 확정" : "분할";
   } else if (state.stage === "second") {
-    const metrics = splitMetrics(currentSplit());
     if (state.feedback) {
       guide.textContent = state.feedback;
       guide.classList.add("is-error");
-    } else if (metrics.perfect) {
-      guide.textContent = "완전 분리 · 엔트로피 0";
-      guide.classList.add("is-perfect");
+    } else if (!isCurrentSplitEvaluated()) {
+      guide.textContent = "몇 번 분할선으로 나눌까요?";
     } else {
-      guide.textContent = "혼합 집단 · 수입 분할";
+      const metrics = splitMetrics(currentSplit());
+      if (metrics.perfect) {
+        guide.textContent = "완전 분리 · 엔트로피 0";
+        guide.classList.add("is-perfect");
+      } else {
+        guide.textContent = "정보이득 확인 · 다른 분할선과 비교";
+      }
     }
     confirm.hidden = false;
     confirm.disabled = false;
-    confirm.textContent = "2차 분할 확정";
+    confirm.textContent = isCurrentSplitEvaluated() ? "2차 분할 확정" : "분할";
   } else {
     const firstGain = splitMetrics(state.firstSplit, DATA.map((row) => row.id)).gain;
     const secondGain = splitMetrics(state.secondSplit, state.scopeIds).gain;
@@ -651,6 +738,13 @@ function renderAll() {
 }
 
 function confirmCurrentSplit() {
+  if (!isCurrentSplitEvaluated()) {
+    state.evaluatedKey = currentEvaluationKey();
+    state.feedback = "";
+    renderAll();
+    return;
+  }
+
   if (state.stage === "first") {
     const split = currentSplit();
     const metrics = splitMetrics(split);
@@ -671,6 +765,7 @@ function confirmCurrentSplit() {
     state.scopeIds = [...split.groups[state.selectedGroup]];
     state.orientation = split.orientation === "vertical" ? "horizontal" : "vertical";
     state.candidate = validCandidates(state.scopeIds, state.orientation)[0];
+    state.evaluatedKey = null;
     state.feedback = "";
     state.stage = "second";
     renderAll();
@@ -734,6 +829,22 @@ function bindDragEvents() {
   const lineGroup = document.getElementById("active-split-line");
   if (!svg || !lineGroup) return;
 
+  document.querySelectorAll("[data-candidate-line]").forEach((candidateLine) => {
+    const selectCandidate = () => {
+      const candidate = Number(candidateLine.dataset.candidateLine);
+      if (candidate === state.candidate) return;
+      state.candidate = candidate;
+      clearCurrentEvaluation();
+      renderAll();
+    };
+    candidateLine.addEventListener("click", selectCandidate);
+    candidateLine.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      selectCandidate();
+    });
+  });
+
   const candidates = validCandidates(state.scopeIds, state.orientation);
   const coordinates = candidates.map((candidate) => AXES[state.orientation].candidatePositions[candidate - 1]);
 
@@ -761,7 +872,7 @@ function bindDragEvents() {
       return Math.abs(coordinate - raw) < Math.abs(coordinates[best] - raw) ? index : best;
     }, 0);
     state.candidate = candidates[nearestIndex];
-    state.feedback = "";
+    clearCurrentEvaluation();
     renderAll();
   });
 
@@ -773,7 +884,7 @@ function bindDragEvents() {
     const forward = event.key === "ArrowRight" || event.key === "ArrowUp";
     const nextIndex = Math.max(0, Math.min(candidates.length - 1, currentIndex + (forward ? 1 : -1)));
     state.candidate = candidates[nextIndex];
-    state.feedback = "";
+    clearCurrentEvaluation();
     renderAll();
     document.getElementById("active-split-line")?.focus();
   });
