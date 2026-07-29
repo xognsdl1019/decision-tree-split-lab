@@ -135,6 +135,10 @@ main {
   letter-spacing: 0.11em;
 }
 
+.mini-label {
+  font-size: 0.84rem;
+}
+
 h1,
 h2,
 p {
@@ -163,7 +167,7 @@ h2 {
 }
 
 .intro-lead {
-  margin: 21px 0 25px;
+  margin: 19px 0 20px;
   color: var(--muted);
   font-size: clamp(1.05rem, 1.5vw, 1.35rem);
 }
@@ -172,55 +176,35 @@ h2 {
   color: var(--blue-dark);
 }
 
-.intro-steps {
-  display: grid;
-  gap: 8px;
+.intro-flow {
+  width: fit-content;
+  max-width: 100%;
   margin-bottom: 24px;
-}
-
-.intro-steps > div {
+  padding: 13px 16px;
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 10px 13px;
-  border: 1px solid #d5e0e8;
+  flex-wrap: wrap;
+  gap: 10px;
+  border: 2px solid #b9d0e4;
   border-radius: 12px;
+  color: var(--navy);
   background: rgba(255, 255, 255, 0.82);
 }
 
-.intro-steps > div > span {
-  width: 31px;
-  height: 31px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--blue);
+.intro-flow strong {
+  font-size: 0.95rem;
+}
+
+.intro-flow span {
+  color: var(--orange);
+  font-size: 1.2rem;
   font-weight: 900;
-}
-
-.intro-steps p {
-  margin: 0;
-}
-
-.intro-steps strong,
-.intro-steps small {
-  display: block;
-}
-
-.intro-steps strong {
-  color: var(--navy);
-}
-
-.intro-steps small {
-  color: var(--muted);
-  font-size: 0.8rem;
 }
 
 .primary-button,
 .secondary-button {
   min-height: 52px;
+  font-size: 1rem;
   padding: 12px 22px;
   border: 2px solid transparent;
   border-radius: 13px;
@@ -457,7 +441,7 @@ h2 {
 }
 
 .core-card strong {
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
 .lab-heading {
@@ -828,13 +812,13 @@ h2 {
 
 .metric-value span {
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
 .metric-value strong {
   color: var(--navy);
-  font-size: 1.08rem;
+  font-size: 1.18rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -899,12 +883,12 @@ h2 {
 
 .summary-group strong {
   color: var(--navy);
-  font-size: 0.88rem;
+  font-size: 0.96rem;
 }
 
 .summary-group em {
   color: var(--muted);
-  font-size: 0.73rem;
+  font-size: 0.8rem;
   font-style: normal;
   font-weight: 800;
 }
@@ -913,7 +897,7 @@ h2 {
   display: flex;
   gap: 7px;
   margin-top: 6px;
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   font-weight: 900;
 }
 
@@ -940,7 +924,7 @@ h2 {
   border-radius: 9px;
   color: #356276;
   background: #eef5f8;
-  font-size: 0.79rem;
+  font-size: 0.95rem;
   font-weight: 800;
 }
 
@@ -994,7 +978,7 @@ h2 {
 }
 
 .empty-tree small {
-  font-size: 0.76rem;
+  font-size: 0.82rem;
 }
 
 .tree-guide {
@@ -1005,7 +989,7 @@ h2 {
   border-radius: 10px;
   color: #3f6274;
   background: #eef4f7;
-  font-size: 0.79rem;
+  font-size: 0.9rem;
   font-weight: 800;
   text-align: center;
 }
@@ -1042,7 +1026,7 @@ h2 {
   display: block;
   margin-bottom: 2px;
   color: var(--blue-dark);
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
 }
 
