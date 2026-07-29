@@ -25,28 +25,29 @@
     <section id="intro-screen" class="screen is-active" aria-labelledby="intro-title">
       <div class="intro-layout">
         <div class="intro-copy">
-          <p class="eyebrow">분할을 눈으로 이해하는 실습</p>
-          <h1 id="intro-title">질문과 분할로 만드는<br>의사결정 트리</h1>
+          <p class="eyebrow">의사결정 트리 분할 실습</p>
+          <h1 id="intro-title">분할선을 움직여<br>구매와 미구매를 나눠보세요</h1>
           <p class="intro-lead">
-            점들을 관찰하고 분할선을 직접 움직여 보세요.<br>
-            X축과 Y축에서 선택한 두 선이 트리의 <strong>질문 두 개</strong>로 바뀝니다.
+            데이터가 <strong>덜 섞이도록</strong> X축과 Y축의 분할선을 조정합니다.
           </p>
 
-          <div class="intro-steps">
-            <div><span>1</span><p><strong>점을 관찰하고</strong><small>고객 14명의 위치와 결과 확인</small></p></div>
-            <div><span>2</span><p><strong>선을 움직이고</strong><small>섞임과 엔트로피가 줄어드는지 확인</small></p></div>
-            <div><span>3</span><p><strong>한 번 더 나눕니다</strong><small>남은 혼합 집단을 다른 축으로 분할</small></p></div>
+          <div class="intro-flow" aria-label="실습 핵심 흐름">
+            <strong>분할선 이동</strong>
+            <span aria-hidden="true">→</span>
+            <strong>엔트로피 감소</strong>
+            <span aria-hidden="true">→</span>
+            <strong>질문 생성</strong>
           </div>
 
           <button id="start-button" class="primary-button" type="button">
-            두 축으로 분할해 보기 <span aria-hidden="true">→</span>
+            실습 시작 <span aria-hidden="true">→</span>
           </button>
         </div>
 
         <div class="intro-visual-card" aria-label="실습 화면 미리보기">
           <div class="preview-heading">
-            <span>분할 원리를 위한 실습용 데이터</span>
-            <strong>Computer Purchase · 14명</strong>
+            <span>컴퓨터 구매 데이터</span>
+            <strong>14명</strong>
           </div>
           <div class="preview-plot">
             <span class="preview-axis-y">수입</span>
@@ -64,8 +65,7 @@
             <span class="no-legend"><i>▲</i> 미구매 5명</span>
           </div>
           <div class="core-card">
-            <span>핵심 경험</span>
-            <strong>분할선 하나마다 질문 하나</strong>
+            <strong>분할선 하나 = 질문 하나</strong>
           </div>
         </div>
       </div>
@@ -74,23 +74,23 @@
     <section id="lab-screen" class="screen" aria-labelledby="lab-title">
       <div class="lab-heading">
         <div>
-          <p class="eyebrow">점을 나누는 선이 질문이 되는 과정</p>
-          <h1 id="lab-title">분할선을 직접 움직여 보세요</h1>
+          <p class="eyebrow">분할 기준 탐색</p>
+          <h1 id="lab-title">분할선 조정</h1>
         </div>
         <span id="stage-chip" class="stage-chip">첫 번째 분할</span>
       </div>
 
       <div id="completion-banner" class="completion-banner" hidden>
         <span aria-hidden="true">✓</span>
-        <p><strong>X축과 Y축의 두 분할선이 질문 두 개가 되었습니다.</strong> 세 개의 결과 리프가 완성되었습니다.</p>
+        <p><strong>질문 2개 · 리프 3개 · 분할 완료</strong></p>
       </div>
 
       <div class="lab-grid">
         <section class="plot-panel" aria-labelledby="plot-title">
           <div class="panel-top">
             <div>
-              <p class="mini-label">분할 원리를 위한 실습용 데이터 · 14명</p>
-              <h2 id="plot-title">X축: 나이 · Y축: 수입</h2>
+              <p class="mini-label">실습 데이터 · 14명</p>
+              <h2 id="plot-title">나이 × 수입</h2>
             </div>
             <div class="plot-legend">
               <span class="buy-legend"><i>●</i> 구매</span>
@@ -111,7 +111,7 @@
           <div class="plot-actions">
             <p id="action-guide" class="action-guide"></p>
             <button id="confirm-split-button" class="primary-button compact" type="button">
-              이 분할선 확정
+              분할 확정
             </button>
             <button id="restart-button" class="secondary-button compact" type="button">
               ↻ 처음부터
@@ -129,7 +129,7 @@
           </div>
           <div id="tree-stage" class="tree-stage" aria-live="polite"></div>
           <div id="tree-guide" class="tree-guide">
-            분할선을 확정하면 이곳에 질문이 만들어집니다.
+            분할선 확정 → 질문 생성
           </div>
         </aside>
       </div>
