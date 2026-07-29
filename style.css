@@ -683,14 +683,6 @@ h2 {
   fill: var(--orange-dark);
 }
 
-.data-point {
-  transition: opacity 120ms ease;
-}
-
-.data-point.is-dimmed {
-  opacity: 0.18;
-}
-
 .point-buy {
   fill: var(--blue);
   stroke: #fff;
@@ -732,6 +724,7 @@ h2 {
 
 .split-line-group:hover,
 .split-line-group:focus-visible,
+.split-line-group.is-evaluated,
 .split-line-group.is-selected {
   opacity: 1;
 }
@@ -782,6 +775,23 @@ h2 {
 
 .line-number.is-stage-label text {
   font-size: 11px;
+}
+
+.line-gain-badge {
+  pointer-events: none;
+}
+
+.line-gain-badge rect {
+  fill: #fff;
+  stroke: var(--split-color, var(--orange));
+  stroke-width: 2.5;
+}
+
+.line-gain-badge text {
+  fill: var(--split-color, var(--orange));
+  font-size: 12px;
+  font-weight: 900;
+  text-anchor: middle;
 }
 
 .plot-wrap.is-perfect .split-line-main {
