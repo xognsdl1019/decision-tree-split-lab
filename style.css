@@ -58,18 +58,46 @@ button:focus-visible,
   gap: 24px;
 }
 
-.course-title {
-  margin: 0;
-  color: var(--navy);
-  font-size: 1rem;
+.course-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-mark {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--blue);
+  font-size: 0.78rem;
   font-weight: 900;
-  letter-spacing: -0.025em;
+  letter-spacing: 0.04em;
+}
+
+.course-brand small,
+.course-brand strong {
+  display: block;
+  line-height: 1.1;
   white-space: nowrap;
 }
 
-.course-title span {
-  margin: 0 7px;
-  color: #91a4b3;
+.course-brand small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.course-brand strong {
+  margin-top: 4px;
+  color: var(--navy);
+  font-size: 0.92rem;
+  letter-spacing: -0.025em;
 }
 
 .header-steps {
@@ -166,20 +194,10 @@ h2 {
   line-height: 1.12;
 }
 
-.intro-lead {
-  margin: 19px 0 20px;
-  color: var(--muted);
-  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
-}
-
-.intro-lead strong {
-  color: var(--blue-dark);
-}
-
 .intro-flow {
   width: fit-content;
   max-width: 100%;
-  margin-bottom: 24px;
+  margin: 22px 0 24px;
   padding: 13px 16px;
   display: flex;
   align-items: center;
@@ -1168,6 +1186,13 @@ button.group-node:hover {
   color: var(--orange-dark);
 }
 
+.leaf-result {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
 .subtree {
   width: 100%;
   display: flex;
@@ -1282,12 +1307,13 @@ button.group-node:hover {
 }
 
 @media (max-width: 620px) {
-  .course-title {
-    font-size: 0.8rem;
+  .course-mark {
+    width: 32px;
+    height: 32px;
   }
 
-  .course-title span {
-    margin: 0 3px;
+  .course-brand strong {
+    font-size: 0.78rem;
   }
 
   .intro-layout {
