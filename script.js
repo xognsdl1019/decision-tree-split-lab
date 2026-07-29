@@ -498,7 +498,7 @@ function groupNodeMarkup(ids, values) {
     <div class="group-node leaf-node ${leafClass}">
       <strong>${values.join(" · ")}</strong>
       <span>리프 · ${result.total}명</span>
-      <small>${classification === "구매" ? "●" : "▲"} 결과 · ${classification}</small>
+      <small class="leaf-result">${classification === "구매" ? "●" : "▲"} ${classification}</small>
     </div>
   `;
 }
