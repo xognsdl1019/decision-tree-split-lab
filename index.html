@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="점을 직접 나누며 분할 기준이 의사결정 트리의 질문으로 바뀌는 과정을 체험하는 실습">
   <title>인공지능 입문 | 의사결정 트리 분할 실습</title>
-  <link rel="stylesheet" href="style.css?v=20260730-5">
+  <link rel="stylesheet" href="style.css?v=20260730-6">
 </head>
 <body>
   <header class="site-header">
@@ -23,8 +23,6 @@
         <span data-header-step="2"><b>2</b> 분할 실습</span>
         <i aria-hidden="true"></i>
         <span data-header-step="3"><b>3</b> 트리 확인</span>
-        <i aria-hidden="true"></i>
-        <span data-header-step="4"><b>4</b> 핵심 정리</span>
       </div>
     </div>
   </header>
@@ -105,31 +103,39 @@
               <p class="mini-label">실습 데이터 · 20명</p>
               <h2 id="plot-title">나이 × 수입</h2>
             </div>
+            <div class="plot-legend" aria-label="데이터 범례">
+              <span class="buy-legend"><i>●</i> 구매</span>
+              <span class="no-legend"><i>▲</i> 미구매</span>
+            </div>
           </div>
 
-          <div id="orientation-controls" class="orientation-controls" aria-label="분할 방향 선택"></div>
+          <div class="lab-workspace">
+            <div class="plot-column">
+              <div id="plot-wrap" class="plot-wrap"></div>
+            </div>
 
-          <div id="plot-wrap" class="plot-wrap"></div>
+            <aside class="control-rail" aria-label="분할선 설정과 계산 결과">
+              <div class="control-block">
+                <span class="control-label">분할 방향</span>
+                <div id="orientation-controls" class="orientation-controls" aria-label="분할 방향 선택"></div>
+              </div>
 
-          <div class="plot-legend" aria-label="데이터 범례">
-            <span class="buy-legend"><i>●</i> 구매</span>
-            <span class="no-legend"><i>▲</i> 미구매</span>
-          </div>
+              <div id="candidate-controls" class="candidate-controls" aria-label="분할 후보 선택"></div>
 
-          <div id="candidate-controls" class="candidate-controls" aria-label="분할 후보 선택"></div>
+              <div class="split-detail-grid">
+                <div id="split-metrics" class="split-metrics" aria-live="polite"></div>
+                <div id="group-summary" class="group-summary" aria-live="polite"></div>
+              </div>
 
-          <div class="split-detail-grid">
-            <div id="split-metrics" class="split-metrics" aria-live="polite"></div>
-            <div id="group-summary" class="group-summary" aria-live="polite"></div>
-          </div>
-
-          <div class="plot-actions">
-            <button id="confirm-split-button" class="primary-button compact" type="button">
-              분할 확정
-            </button>
-            <button id="restart-button" class="secondary-button compact" type="button">
-              ↻ 처음부터
-            </button>
+              <div class="plot-actions">
+                <button id="confirm-split-button" class="primary-button compact" type="button">
+                  분할 확정
+                </button>
+                <button id="restart-button" class="secondary-button compact" type="button">
+                  ↻ 처음부터
+                </button>
+              </div>
+            </aside>
           </div>
         </section>
       </div>
@@ -179,53 +185,8 @@
       </div>
     </section>
 
-    <section id="wrap-screen" class="screen" aria-labelledby="wrap-title">
-      <div class="keyword-equation" aria-label="핵심 관계">
-        <strong id="wrap-title">분할선</strong>
-        <span>=</span>
-        <strong>질문 노드</strong>
-      </div>
-
-      <div class="keyword-grid">
-        <article>
-          <span>01</span>
-          <strong>후보 비교</strong>
-          <div><b>방향</b><b>위치</b><b>정보이득</b></div>
-        </article>
-        <article>
-          <span>02</span>
-          <strong>1차 분할</strong>
-          <div><b>질문 1개</b><b>하위 집단</b><b>혼합 확인</b></div>
-        </article>
-        <article>
-          <span>03</span>
-          <strong>반복 분할</strong>
-          <div><b>혼합 집단</b><b>추가 질문</b><b>축 전환</b></div>
-        </article>
-        <article>
-          <span>04</span>
-          <strong>분류 완성</strong>
-          <div><b>엔트로피 0</b><b>리프 노드</b><b>구매 · 미구매</b></div>
-        </article>
-      </div>
-
-      <div class="keyword-rules">
-        <span><b>혼합</b> → 재분할</span>
-        <span><b>순수</b> → 리프</span>
-        <span><b>정보이득 최대</b> → 질문 선택</span>
-      </div>
-
-      <div class="wrap-actions">
-        <button id="review-tree-button" class="secondary-button compact" type="button">
-          ← 트리 다시 보기
-        </button>
-        <button id="restart-experience-button" class="primary-button compact" type="button">
-          처음부터
-        </button>
-      </div>
-    </section>
   </main>
 
-  <script src="script.js?v=20260730-5"></script>
+  <script src="script.js?v=20260730-6"></script>
 </body>
 </html>
