@@ -2159,3 +2159,305 @@ button.group-node:hover {
     width: 100%;
   }
 }
+
+/* Compact graph-first workspace */
+.lab-heading {
+  min-height: 62px;
+}
+
+.lab-heading h1 {
+  font-size: clamp(1.45rem, 2vw, 1.85rem);
+}
+
+.lab-action-guide {
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 8px 14px;
+  font-size: 1rem;
+}
+
+.lab-instruction-bar {
+  min-height: 40px;
+  margin-bottom: 8px;
+  padding: 6px 13px;
+  gap: 11px;
+  font-size: 0.76rem;
+}
+
+.lab-instruction-bar b {
+  width: 22px;
+  height: 22px;
+  font-size: 0.68rem;
+}
+
+.plot-panel {
+  padding: 13px 16px 14px;
+}
+
+.panel-top {
+  min-height: 38px;
+  margin-bottom: 8px;
+}
+
+.panel-top h2 {
+  font-size: 1.08rem;
+}
+
+.plot-panel > .panel-top .plot-legend {
+  margin: 0;
+  gap: 8px;
+}
+
+.plot-panel > .panel-top .plot-legend > span {
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  box-shadow: none;
+}
+
+.lab-workspace {
+  display: grid;
+  grid-template-columns: minmax(620px, 1.65fr) minmax(340px, 0.72fr);
+  align-items: start;
+  gap: 14px;
+}
+
+.plot-column {
+  min-width: 0;
+}
+
+.plot-column .plot-wrap {
+  width: min(100%, 900px);
+  min-height: 0;
+  margin: 0 auto;
+  aspect-ratio: 770 / 475;
+}
+
+.plot-column .scatter-svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 770 / 475;
+}
+
+.control-rail {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid #d2dee7;
+  border-radius: 13px;
+  background: #f8fbfd;
+}
+
+.control-block {
+  display: grid;
+  gap: 6px;
+}
+
+.control-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.control-rail .orientation-controls {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 0;
+}
+
+.control-rail .orientation-button {
+  min-height: 36px;
+  padding: 5px 8px;
+  font-size: 0.76rem;
+}
+
+.control-rail .candidate-controls {
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.control-rail .candidate-controls > span {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.control-rail .candidate-button {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 10px 4px 5px;
+  justify-content: flex-start;
+  font-size: 0.72rem;
+}
+
+.control-rail .candidate-button b {
+  width: 23px;
+  height: 23px;
+  font-size: 0.7rem;
+}
+
+.control-rail .split-detail-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.control-rail .split-metrics {
+  min-height: 74px;
+  margin: 0;
+  padding: 7px;
+  gap: 5px;
+}
+
+.control-rail .metric-value {
+  min-width: 72px;
+}
+
+.control-rail .metric-value span {
+  font-size: 0.66rem;
+}
+
+.control-rail .metric-value strong {
+  font-size: 1rem;
+}
+
+.control-rail .metric-operator {
+  font-size: 0.96rem;
+}
+
+.control-rail .group-summary {
+  min-height: 0;
+  gap: 6px;
+}
+
+.control-rail .summary-group {
+  padding: 7px 8px;
+}
+
+.control-rail .summary-group-top {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.control-rail .summary-group strong {
+  font-size: 0.78rem;
+}
+
+.control-rail .summary-group em {
+  font-size: 0.67rem;
+}
+
+.control-rail .summary-counts {
+  flex-wrap: wrap;
+  gap: 3px 7px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+}
+
+.control-rail .metrics-pending strong {
+  font-size: 0.82rem;
+}
+
+.control-rail .metrics-pending span {
+  font-size: 0.68rem;
+}
+
+.control-rail .plot-actions {
+  min-height: 42px;
+  margin: 0;
+}
+
+.control-rail .plot-actions button {
+  min-width: 0;
+  min-height: 38px;
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 1120px) {
+  .lab-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .plot-column .plot-wrap {
+    width: min(100%, 860px);
+  }
+
+  .control-rail {
+    grid-template-columns: minmax(190px, 0.7fr) minmax(250px, 1fr);
+    align-items: start;
+  }
+
+  .control-rail .orientation-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .control-rail .candidate-controls {
+    grid-template-columns: auto 1fr 1fr;
+    align-items: center;
+  }
+
+  .control-rail .split-detail-grid,
+  .control-rail .plot-actions {
+    grid-column: 1 / -1;
+  }
+
+  .control-rail .split-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .lab-heading {
+    min-height: 54px;
+    padding: 8px 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .lab-action-guide {
+    font-size: 0.9rem;
+  }
+
+  .lab-instruction-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .lab-instruction-bar span {
+    justify-content: flex-start;
+  }
+
+  .lab-instruction-bar > i {
+    display: none;
+  }
+
+  .panel-top {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .control-rail,
+  .control-rail .split-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-rail .orientation-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .control-rail .candidate-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .control-rail .split-detail-grid,
+  .control-rail .plot-actions {
+    grid-column: auto;
+  }
+}
