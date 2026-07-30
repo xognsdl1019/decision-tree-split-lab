@@ -63,6 +63,7 @@ const state = {
   selectedGroup: null,
   scopeIds: DATA.map((row) => row.id),
   secondSplit: null,
+  treeStep: 0,
   dragging: false,
   feedback: ""
 };
@@ -193,12 +194,18 @@ function setScreen(screen) {
   document.querySelectorAll(".screen").forEach((element) => {
     element.classList.toggle("is-active", element.id === `${screen}-screen`);
   });
+  const activeStep = {
+    intro: 1,
+    lab: 2,
+    tree: 3,
+    wrap: 4
+  }[screen] || 1;
   document.querySelectorAll("[data-header-step]").forEach((element) => {
     const step = Number(element.dataset.headerStep);
-    const activeStep = screen === "intro" ? 1 : state.stage === "first" ? 2 : 3;
     element.classList.toggle("is-active", step === activeStep);
     element.classList.toggle("is-done", step < activeStep);
   });
+  if (screen === "tree") renderTreeRecap();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -211,6 +218,7 @@ function resetExperience() {
   state.selectedGroup = null;
   state.scopeIds = DATA.map((row) => row.id);
   state.secondSplit = null;
+  state.treeStep = 0;
   state.dragging = false;
   state.feedback = "";
   renderAll();
@@ -628,36 +636,17 @@ function secondSubtreeMarkup(split) {
   `;
 }
 
-function renderTree() {
-  const treeStage = document.getElementById("tree-stage");
-  const treeGuide = document.getElementById("tree-guide");
-  const questionCount = document.getElementById("question-count");
-
-  if (!state.firstSplit) {
-    questionCount.textContent = "질문 0개";
-    treeStage.innerHTML = `
-      <div class="empty-tree">
-        <div class="empty-question">?</div>
-        <strong>질문 없음</strong>
-        <small>분할선 확정 대기</small>
-      </div>
-    `;
-    treeGuide.classList.remove("is-active");
-    treeGuide.textContent = "분할선 확정 → 질문 생성";
-    return;
-  }
-
-  questionCount.textContent = `질문 ${state.secondSplit ? 2 : 1}개`;
+function treeMarkup(includeSecondSplit) {
   const root = state.firstSplit;
   const rootMetrics = splitMetrics(root, DATA.map((row) => row.id));
-  const branchA = state.selectedGroup === "A" && state.secondSplit
+  const branchA = state.selectedGroup === "A" && includeSecondSplit
     ? secondSubtreeMarkup(state.secondSplit)
     : groupNodeMarkup(root.groups.A, root.aValues);
-  const branchB = state.selectedGroup === "B" && state.secondSplit
+  const branchB = state.selectedGroup === "B" && includeSecondSplit
     ? secondSubtreeMarkup(state.secondSplit)
     : groupNodeMarkup(root.groups.B, root.bValues);
 
-  treeStage.innerHTML = `
+  return `
     <div class="tree-root">
       <div class="question-node">
         <small>첫 번째 질문 · 정보이득 ${formatNumber(rootMetrics.gain)}</small>
@@ -675,18 +664,53 @@ function renderTree() {
       </div>
     </div>
   `;
+}
 
-  treeGuide.classList.add("is-active");
-  treeGuide.textContent = state.stage === "second"
-    ? "혼합 집단 → 수입으로 재분할"
-    : "질문 2개 → 리프 3개";
+function renderTreeRecap() {
+  const stage = document.getElementById("tree-recap-stage");
+  if (!stage || !state.firstSplit || !state.secondSplit) return;
+
+  const labels = [
+    ["분할 전", "전체 데이터 · 질문 없음"],
+    ["1차 분할", "분할선 1개 · 질문 노드 1개"],
+    ["최종 트리", "질문 2개 · 리프 노드 3개"]
+  ];
+  document.getElementById("tree-recap-label").textContent = labels[state.treeStep][0];
+  document.getElementById("tree-recap-heading").textContent = labels[state.treeStep][1];
+
+  if (state.treeStep === 0) {
+    const result = counts(DATA);
+    stage.innerHTML = `
+      <div class="dataset-root">
+        <small>전체 데이터</small>
+        <strong>${result.total}명</strong>
+        <div>
+          <span class="buy-text">● 구매 ${result.purchase}</span>
+          <span class="no-text">▲ 미구매 ${result.noPurchase}</span>
+        </div>
+        <em>질문 없음</em>
+      </div>
+    `;
+  } else {
+    stage.innerHTML = treeMarkup(state.treeStep === 2);
+  }
+
+  document.querySelectorAll("[data-tree-step]").forEach((button) => {
+    const step = Number(button.dataset.treeStep);
+    button.classList.toggle("is-active", step === state.treeStep);
+    button.classList.toggle("is-done", step < state.treeStep);
+  });
+
+  const previous = document.getElementById("tree-prev-button");
+  const next = document.getElementById("tree-next-button");
+  previous.disabled = state.treeStep === 0;
+  next.textContent = state.treeStep === 2 ? "핵심 정리 →" : "다음 단계 →";
 }
 
 function renderStageText() {
   const chip = document.getElementById("stage-chip");
   const guide = document.getElementById("action-guide");
   const confirm = document.getElementById("confirm-split-button");
-  const completion = document.getElementById("completion-banner");
 
   const stageText = {
     first: "1차 · 나이 분할",
@@ -694,7 +718,6 @@ function renderStageText() {
     complete: "트리 완성"
   };
   chip.textContent = stageText[state.stage];
-  completion.hidden = state.stage !== "complete";
   guide.classList.remove("is-error", "is-perfect");
 
   if (state.stage === "first") {
@@ -741,12 +764,6 @@ function renderStageText() {
     confirm.hidden = true;
   }
 
-  document.querySelectorAll("[data-header-step]").forEach((element) => {
-    const step = Number(element.dataset.headerStep);
-    const active = state.stage === "complete" ? 3 : 2;
-    element.classList.toggle("is-active", step === active);
-    element.classList.toggle("is-done", step < active);
-  });
 }
 
 function renderAll() {
@@ -755,7 +772,6 @@ function renderAll() {
   renderCandidateControls();
   renderSplitMetrics();
   renderGroupSummary();
-  renderTree();
   renderStageText();
 }
 
@@ -806,6 +822,8 @@ function confirmCurrentSplit() {
     state.feedback = "";
     state.stage = "complete";
     renderAll();
+    state.treeStep = 0;
+    setScreen("tree");
   }
 }
 
@@ -918,6 +936,32 @@ document.getElementById("start-button").addEventListener("click", () => {
 
 document.getElementById("confirm-split-button").addEventListener("click", confirmCurrentSplit);
 document.getElementById("restart-button").addEventListener("click", resetExperience);
+document.getElementById("tree-prev-button").addEventListener("click", () => {
+  state.treeStep = Math.max(0, state.treeStep - 1);
+  renderTreeRecap();
+});
+document.getElementById("tree-next-button").addEventListener("click", () => {
+  if (state.treeStep < 2) {
+    state.treeStep += 1;
+    renderTreeRecap();
+    return;
+  }
+  setScreen("wrap");
+});
+document.querySelectorAll("[data-tree-step]").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.treeStep = Number(button.dataset.treeStep);
+    renderTreeRecap();
+  });
+});
+document.getElementById("review-tree-button").addEventListener("click", () => {
+  state.treeStep = 2;
+  setScreen("tree");
+});
+document.getElementById("restart-experience-button").addEventListener("click", () => {
+  resetExperience();
+  setScreen("intro");
+});
 
 renderAll();
 setScreen("intro");
