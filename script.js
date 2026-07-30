@@ -197,8 +197,7 @@ function setScreen(screen) {
   const activeStep = {
     intro: 1,
     lab: 2,
-    tree: 3,
-    wrap: 4
+    tree: 3
   }[screen] || 1;
   document.querySelectorAll("[data-header-step]").forEach((element) => {
     const step = Number(element.dataset.headerStep);
@@ -781,7 +780,7 @@ function renderTreeRecap() {
   const previous = document.getElementById("tree-prev-button");
   const next = document.getElementById("tree-next-button");
   previous.disabled = state.treeStep === 0;
-  next.textContent = state.treeStep === 2 ? "핵심 정리 →" : "다음 단계 →";
+  next.textContent = state.treeStep === 2 ? "처음부터" : "다음 단계 →";
 }
 
 function renderStageText() {
@@ -1023,7 +1022,8 @@ document.getElementById("tree-next-button").addEventListener("click", () => {
     renderTreeRecap();
     return;
   }
-  setScreen("wrap");
+  resetExperience();
+  setScreen("intro");
 });
 document.querySelectorAll("[data-tree-step]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -1031,14 +1031,5 @@ document.querySelectorAll("[data-tree-step]").forEach((button) => {
     renderTreeRecap();
   });
 });
-document.getElementById("review-tree-button").addEventListener("click", () => {
-  state.treeStep = 2;
-  setScreen("tree");
-});
-document.getElementById("restart-experience-button").addEventListener("click", () => {
-  resetExperience();
-  setScreen("intro");
-});
-
 renderAll();
 setScreen("intro");
