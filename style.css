@@ -1632,24 +1632,24 @@ button.group-node:hover {
 }
 
 .tree-stepper {
-  max-width: 880px;
-  margin: 0 auto 16px;
+  max-width: 1040px;
+  margin: 0 auto 18px;
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1fr;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .tree-stepper > i {
   color: #8396a5;
-  font-size: 1.35rem;
+  font-size: 1.55rem;
   font-style: normal;
   font-weight: 900;
 }
 
 .tree-stepper button {
-  min-height: 64px;
-  padding: 9px 15px;
+  min-height: 70px;
+  padding: 10px 17px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1659,19 +1659,19 @@ button.group-node:hover {
   color: var(--muted);
   background: #fff;
   cursor: pointer;
-  font-size: 0.94rem;
+  font-size: 1.04rem;
   font-weight: 900;
 }
 
 .tree-stepper button b {
-  width: 33px;
-  height: 33px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   color: #fff;
   background: #8294a1;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
 }
 
 .tree-stepper button.is-active {
@@ -1696,8 +1696,8 @@ button.group-node:hover {
 }
 
 .tree-recap-card {
-  min-height: 610px;
-  padding: 22px 32px 28px;
+  min-height: 645px;
+  padding: 18px 18px 24px;
   border: 1px solid #c8d8e3;
   border-radius: 20px;
   background: #fff;
@@ -1705,39 +1705,39 @@ button.group-node:hover {
 }
 
 .tree-recap-top {
-  min-height: 54px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 13px;
+  gap: 15px;
   border-bottom: 1px solid #dbe5ec;
 }
 
 .tree-recap-top span {
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
   color: #fff;
   background: var(--blue);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 900;
 }
 
 .tree-recap-top strong {
   color: var(--navy);
-  font-size: 1.15rem;
+  font-size: 1.32rem;
 }
 
 .tree-recap-stage {
-  min-height: 505px;
-  padding: 30px 2% 18px;
+  min-height: 535px;
+  padding: 24px 0 12px;
 }
 
 .tree-change-layout {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(260px, 0.6fr) 54px minmax(610px, 1.4fr);
+  grid-template-columns: minmax(340px, 0.8fr) 64px minmax(620px, 1.6fr);
   align-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .mini-split-visual {
@@ -1802,7 +1802,7 @@ button.group-node:hover {
 
 .split-to-tree-arrow {
   color: var(--blue);
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 900;
   text-align: center;
 }
@@ -1814,51 +1814,56 @@ button.group-node:hover {
 }
 
 .tree-recap-stage .tree-root {
-  max-width: 820px;
+  max-width: 920px;
 }
 
 .tree-recap-stage .question-node {
-  min-width: 230px;
-  max-width: 300px;
-  padding: 15px 18px;
-  font-size: 1.02rem;
+  min-width: 260px;
+  max-width: 340px;
+  padding: 18px 22px;
+  font-size: 1.13rem;
 }
 
 .tree-recap-stage .question-node small {
-  margin-bottom: 5px;
-  font-size: 0.75rem;
+  margin-bottom: 6px;
+  font-size: 0.84rem;
 }
 
 .tree-recap-stage .group-node {
-  max-width: 250px;
-  min-height: 104px;
-  padding: 13px 14px;
+  max-width: 285px;
+  min-height: 114px;
+  padding: 15px 16px;
 }
 
 .tree-recap-stage .group-node strong {
-  font-size: 0.93rem;
+  font-size: 1.02rem;
 }
 
 .tree-recap-stage .group-node span,
 .tree-recap-stage .group-node small {
-  font-size: 0.78rem;
+  font-size: 0.86rem;
+}
+
+.tree-recap-stage .branch-label {
+  padding: 3px 9px;
+  font-size: 0.7rem;
 }
 
 .tree-recap-stage .subtree .question-node {
-  min-width: 190px;
-  max-width: 245px;
-  padding: 12px 13px;
-  font-size: 0.88rem;
+  min-width: 215px;
+  max-width: 280px;
+  padding: 14px 16px;
+  font-size: 0.98rem;
 }
 
 .tree-recap-stage .subtree .group-node {
-  min-height: 88px;
+  min-height: 98px;
 }
 
 .dataset-root {
-  width: min(430px, 100%);
-  min-height: 230px;
-  padding: 30px;
+  width: min(500px, 100%);
+  min-height: 260px;
+  padding: 34px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -1872,28 +1877,28 @@ button.group-node:hover {
 
 .dataset-root small {
   color: var(--blue-dark);
-  font-size: 0.92rem;
+  font-size: 1.02rem;
   font-weight: 900;
 }
 
 .dataset-root > strong {
-  font-size: 3.25rem;
+  font-size: 3.65rem;
   line-height: 1;
 }
 
 .dataset-root > div {
   display: flex;
   gap: 18px;
-  font-size: 1rem;
+  font-size: 1.12rem;
   font-weight: 900;
 }
 
 .dataset-root em {
-  padding: 7px 13px;
+  padding: 8px 15px;
   border-radius: 999px;
   color: var(--muted);
   background: #e8eef2;
-  font-size: 0.83rem;
+  font-size: 0.92rem;
   font-style: normal;
   font-weight: 900;
 }
@@ -2027,18 +2032,27 @@ button.group-node:hover {
   color: #fff;
 }
 
+@media (max-width: 1200px) {
+  .tree-change-layout {
+    grid-template-columns: minmax(260px, 0.65fr) 42px minmax(500px, 1.35fr);
+    gap: 12px;
+  }
+}
+
 @media (max-width: 1100px) {
   .split-detail-grid {
     grid-template-columns: 1fr;
   }
 
-  .tree-change-layout {
-    grid-template-columns: minmax(210px, 0.55fr) 38px minmax(440px, 1.45fr);
-    gap: 10px;
-  }
-
   .keyword-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 701px) {
+  .tree-change-layout {
+    grid-template-columns: minmax(190px, 0.55fr) 34px minmax(380px, 1.45fr);
+    gap: 10px;
   }
 }
 
