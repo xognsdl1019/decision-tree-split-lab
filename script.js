@@ -253,6 +253,70 @@ function pointMarkup(row, position) {
   `;
 }
 
+function miniPointMarkup(row, position) {
+  if (row.result === "구매") {
+    return `<circle class="mini-point-buy" cx="${position.x}" cy="${position.y}" r="10"></circle>`;
+  }
+  const points = `${position.x},${position.y - 12} ${position.x - 11},${position.y + 9} ${position.x + 11},${position.y + 9}`;
+  return `<polygon class="mini-point-no" points="${points}"></polygon>`;
+}
+
+function miniRegionsMarkup(split, bounds, prefix) {
+  if (split.orientation === "vertical") {
+    return `
+      <rect class="mini-region-${prefix}-a" x="${bounds.x1}" y="${bounds.y1}"
+        width="${Math.max(0, split.coordinate - bounds.x1)}" height="${bounds.y2 - bounds.y1}"></rect>
+      <rect class="mini-region-${prefix}-b" x="${split.coordinate}" y="${bounds.y1}"
+        width="${Math.max(0, bounds.x2 - split.coordinate)}" height="${bounds.y2 - bounds.y1}"></rect>
+    `;
+  }
+  return `
+    <rect class="mini-region-${prefix}-b" x="${bounds.x1}" y="${bounds.y1}"
+      width="${bounds.x2 - bounds.x1}" height="${Math.max(0, split.coordinate - bounds.y1)}"></rect>
+    <rect class="mini-region-${prefix}-a" x="${bounds.x1}" y="${split.coordinate}"
+      width="${bounds.x2 - bounds.x1}" height="${Math.max(0, bounds.y2 - split.coordinate)}"></rect>
+  `;
+}
+
+function miniLineMarkup(split, bounds, className) {
+  if (split.orientation === "vertical") {
+    return `<line class="${className}" x1="${split.coordinate}" y1="${bounds.y1}" x2="${split.coordinate}" y2="${bounds.y2}"></line>`;
+  }
+  return `<line class="${className}" x1="${bounds.x1}" y1="${split.coordinate}" x2="${bounds.x2}" y2="${split.coordinate}"></line>`;
+}
+
+function miniSplitMarkup(step) {
+  const rootBounds = { x1: PLOT.left, x2: PLOT.right, y1: PLOT.top, y2: PLOT.bottom };
+  const scopeBounds = currentScopeBounds();
+  let regions = `<rect class="mini-plot-base" x="${PLOT.left}" y="${PLOT.top}" width="${PLOT.right - PLOT.left}" height="${PLOT.bottom - PLOT.top}"></rect>`;
+  let lines = "";
+
+  if (step >= 1) {
+    regions += miniRegionsMarkup(state.firstSplit, rootBounds, "root");
+    lines += miniLineMarkup(state.firstSplit, rootBounds, "mini-line-first");
+  }
+  if (step >= 2) {
+    regions += miniRegionsMarkup(state.secondSplit, scopeBounds, "child");
+    lines += miniLineMarkup(state.secondSplit, scopeBounds, "mini-line-second");
+  }
+
+  const cellCounts = new Map();
+  const points = DATA.map((row) => {
+    const cellKey = `${row.age}-${row.income}`;
+    const index = cellCounts.get(cellKey) || 0;
+    cellCounts.set(cellKey, index + 1);
+    return miniPointMarkup(row, pointPosition(row, index));
+  }).join("");
+
+  return `
+    <svg viewBox="0 0 770 475" role="img" aria-label="데이터 분할 영역 변화">
+      ${regions}
+      ${points}
+      ${lines}
+    </svg>
+  `;
+}
+
 function regionMarkup(split, bounds) {
   if (split.orientation === "vertical") {
     return `
@@ -678,9 +742,10 @@ function renderTreeRecap() {
   document.getElementById("tree-recap-label").textContent = labels[state.treeStep][0];
   document.getElementById("tree-recap-heading").textContent = labels[state.treeStep][1];
 
+  let treeContent = "";
   if (state.treeStep === 0) {
     const result = counts(DATA);
-    stage.innerHTML = `
+    treeContent = `
       <div class="dataset-root">
         <small>전체 데이터</small>
         <strong>${result.total}명</strong>
@@ -692,8 +757,20 @@ function renderTreeRecap() {
       </div>
     `;
   } else {
-    stage.innerHTML = treeMarkup(state.treeStep === 2);
+    treeContent = treeMarkup(state.treeStep === 2);
   }
+
+  stage.innerHTML = `
+    <div class="tree-change-layout">
+      <div class="mini-split-visual">
+        ${miniSplitMarkup(state.treeStep)}
+      </div>
+      <div class="split-to-tree-arrow" aria-hidden="true">→</div>
+      <div class="tree-visual">
+        ${treeContent}
+      </div>
+    </div>
+  `;
 
   document.querySelectorAll("[data-tree-step]").forEach((button) => {
     const step = Number(button.dataset.treeStep);
