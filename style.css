@@ -1479,3 +1479,16 @@ button.group-node:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Chart legend: keep it with the plot, where learners naturally look for it. */
+.plot-panel > .plot-legend {
+  margin: 10px 0 6px;
+  gap: 16px;
+}
+
+.plot-panel > .plot-legend > span {
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  box-shadow: 0 2px 8px rgba(26, 55, 82, 0.08);
+}
