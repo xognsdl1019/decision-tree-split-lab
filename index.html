@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="점을 직접 나누며 분할 기준이 의사결정 트리의 질문으로 바뀌는 과정을 체험하는 실습">
   <title>인공지능 입문 | 의사결정 트리 분할 실습</title>
-  <link rel="stylesheet" href="style.css?v=20260730-3">
+  <link rel="stylesheet" href="style.css?v=20260730-4">
 </head>
 <body>
   <header class="site-header">
@@ -20,9 +20,11 @@
       <div class="header-steps" aria-label="실습 흐름">
         <span class="is-active" data-header-step="1"><b>1</b> 점 관찰</span>
         <i aria-hidden="true"></i>
-        <span data-header-step="2"><b>2</b> 선 이동</span>
+        <span data-header-step="2"><b>2</b> 분할 실습</span>
         <i aria-hidden="true"></i>
-        <span data-header-step="3"><b>3</b> 질문 확인</span>
+        <span data-header-step="3"><b>3</b> 트리 확인</span>
+        <i aria-hidden="true"></i>
+        <span data-header-step="4"><b>4</b> 핵심 정리</span>
       </div>
     </div>
   </header>
@@ -83,9 +85,14 @@
         <span id="stage-chip" class="stage-chip">첫 번째 분할</span>
       </div>
 
-      <div id="completion-banner" class="completion-banner" hidden>
-        <span aria-hidden="true">✓</span>
-        <p><strong>질문 2개 · 리프 3개 · 분할 완료</strong></p>
+      <div class="lab-instruction-bar" aria-label="분할 실습 순서">
+        <span><b>1</b> 방향 선택</span>
+        <i aria-hidden="true">→</i>
+        <span><b>2</b> 후보선 비교</span>
+        <i aria-hidden="true">→</i>
+        <span><b>3</b> 정보이득 확인</span>
+        <i aria-hidden="true">→</i>
+        <span><b>4</b> 분할 확정</span>
       </div>
 
       <div class="lab-grid">
@@ -108,9 +115,10 @@
 
           <div id="candidate-controls" class="candidate-controls" aria-label="분할 후보 선택"></div>
 
-          <div id="split-metrics" class="split-metrics" aria-live="polite"></div>
-
-          <div id="group-summary" class="group-summary" aria-live="polite"></div>
+          <div class="split-detail-grid">
+            <div id="split-metrics" class="split-metrics" aria-live="polite"></div>
+            <div id="group-summary" class="group-summary" aria-live="polite"></div>
+          </div>
 
           <div class="plot-actions">
             <p id="action-guide" class="action-guide"></p>
@@ -122,24 +130,105 @@
             </button>
           </div>
         </section>
+      </div>
+    </section>
 
-        <aside class="tree-panel" aria-labelledby="tree-title">
-          <div class="panel-top">
-            <div>
-              <p class="mini-label">분할선 → 질문</p>
-              <h2 id="tree-title">의사결정 트리</h2>
-            </div>
-            <span id="question-count" class="question-count">질문 0개</span>
-          </div>
-          <div id="tree-stage" class="tree-stage" aria-live="polite"></div>
-          <div id="tree-guide" class="tree-guide">
-            분할선 확정 → 질문 생성
-          </div>
-        </aside>
+    <section id="tree-screen" class="screen" aria-labelledby="tree-recap-title">
+      <div class="recap-heading">
+        <div>
+          <p class="eyebrow">분할 결과 확인</p>
+          <h1 id="tree-recap-title">분할선이 질문 노드로 바뀌는 과정</h1>
+        </div>
+        <span class="stage-chip">트리 변화</span>
+      </div>
+
+      <nav class="tree-stepper" aria-label="트리 생성 단계">
+        <button type="button" data-tree-step="0">
+          <b>1</b>
+          <span>분할 전</span>
+        </button>
+        <i aria-hidden="true">→</i>
+        <button type="button" data-tree-step="1">
+          <b>2</b>
+          <span>1차 분할</span>
+        </button>
+        <i aria-hidden="true">→</i>
+        <button type="button" data-tree-step="2">
+          <b>3</b>
+          <span>최종 트리</span>
+        </button>
+      </nav>
+
+      <div class="tree-recap-card">
+        <div class="tree-recap-top">
+          <span id="tree-recap-label">분할 전</span>
+          <strong id="tree-recap-heading">전체 데이터 · 질문 없음</strong>
+        </div>
+        <div id="tree-recap-stage" class="tree-stage tree-recap-stage" aria-live="polite"></div>
+      </div>
+
+      <div class="recap-actions">
+        <button id="tree-prev-button" class="secondary-button compact" type="button">
+          ← 이전 단계
+        </button>
+        <button id="tree-next-button" class="primary-button compact" type="button">
+          다음 단계 →
+        </button>
+      </div>
+    </section>
+
+    <section id="wrap-screen" class="screen" aria-labelledby="wrap-title">
+      <div class="wrap-heading">
+        <p class="eyebrow">실습 마무리</p>
+        <h1 id="wrap-title">분할선에서 의사결정 트리까지</h1>
+      </div>
+
+      <div class="keyword-equation" aria-label="핵심 관계">
+        <strong>분할선</strong>
+        <span>=</span>
+        <strong>질문 노드</strong>
+      </div>
+
+      <div class="keyword-grid">
+        <article>
+          <span>01</span>
+          <strong>후보 비교</strong>
+          <div><b>방향</b><b>위치</b><b>정보이득</b></div>
+        </article>
+        <article>
+          <span>02</span>
+          <strong>1차 분할</strong>
+          <div><b>질문 1개</b><b>하위 집단</b><b>혼합 확인</b></div>
+        </article>
+        <article>
+          <span>03</span>
+          <strong>반복 분할</strong>
+          <div><b>혼합 집단</b><b>추가 질문</b><b>축 전환</b></div>
+        </article>
+        <article>
+          <span>04</span>
+          <strong>분류 완성</strong>
+          <div><b>엔트로피 0</b><b>리프 노드</b><b>구매 · 미구매</b></div>
+        </article>
+      </div>
+
+      <div class="keyword-rules">
+        <span><b>혼합</b> → 재분할</span>
+        <span><b>순수</b> → 리프</span>
+        <span><b>정보이득 최대</b> → 질문 선택</span>
+      </div>
+
+      <div class="wrap-actions">
+        <button id="review-tree-button" class="secondary-button compact" type="button">
+          ← 트리 다시 보기
+        </button>
+        <button id="restart-experience-button" class="primary-button compact" type="button">
+          처음부터
+        </button>
       </div>
     </section>
   </main>
 
-  <script src="script.js?v=20260730-2"></script>
+  <script src="script.js?v=20260730-4"></script>
 </body>
 </html>
