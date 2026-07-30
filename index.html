@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="점을 직접 나누며 분할 기준이 의사결정 트리의 질문으로 바뀌는 과정을 체험하는 실습">
   <title>인공지능 입문 | 의사결정 트리 분할 실습</title>
-  <link rel="stylesheet" href="style.css?v=20260730-4">
+  <link rel="stylesheet" href="style.css?v=20260730-5">
 </head>
 <body>
   <header class="site-header">
@@ -33,15 +33,16 @@
     <section id="intro-screen" class="screen is-active" aria-labelledby="intro-title">
       <div class="intro-layout">
         <div class="intro-copy">
-          <p class="eyebrow">의사결정 트리 분할 실습</p>
-          <h1 id="intro-title">분할선 조정<br>의사결정 트리 생성</h1>
+          <h1 id="intro-title">분할선 조정</h1>
 
           <div class="intro-flow" aria-label="실습 핵심 흐름">
-            <strong>분할 후보 탐색</strong>
+            <strong>후보선</strong>
             <span aria-hidden="true">→</span>
-            <strong>정보이득 비교</strong>
+            <strong>정보이득</strong>
             <span aria-hidden="true">→</span>
-            <strong>질문 생성</strong>
+            <strong>질문 노드</strong>
+            <span aria-hidden="true">→</span>
+            <strong>트리 구성</strong>
           </div>
 
           <button id="start-button" class="primary-button" type="button">
@@ -70,7 +71,7 @@
             <span class="no-legend"><i>▲</i> 미구매 7명</span>
           </div>
           <div class="core-card">
-            <strong>분할선 하나 = 질문 하나</strong>
+            <strong>분할선 = 질문 노드</strong>
           </div>
         </div>
       </div>
@@ -84,6 +85,8 @@
         </div>
         <span id="stage-chip" class="stage-chip">첫 번째 분할</span>
       </div>
+
+      <p id="action-guide" class="action-guide lab-action-guide"></p>
 
       <div class="lab-instruction-bar" aria-label="분할 실습 순서">
         <span><b>1</b> 방향 선택</span>
@@ -121,7 +124,6 @@
           </div>
 
           <div class="plot-actions">
-            <p id="action-guide" class="action-guide"></p>
             <button id="confirm-split-button" class="primary-button compact" type="button">
               분할 확정
             </button>
@@ -178,13 +180,8 @@
     </section>
 
     <section id="wrap-screen" class="screen" aria-labelledby="wrap-title">
-      <div class="wrap-heading">
-        <p class="eyebrow">실습 마무리</p>
-        <h1 id="wrap-title">분할선에서 의사결정 트리까지</h1>
-      </div>
-
       <div class="keyword-equation" aria-label="핵심 관계">
-        <strong>분할선</strong>
+        <strong id="wrap-title">분할선</strong>
         <span>=</span>
         <strong>질문 노드</strong>
       </div>
@@ -229,6 +226,6 @@
     </section>
   </main>
 
-  <script src="script.js?v=20260730-4"></script>
+  <script src="script.js?v=20260730-5"></script>
 </body>
 </html>
