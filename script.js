@@ -14,7 +14,13 @@ const DATA = [
   { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "미구매" },
   { id: 12, age: "청년", income: "중간", student: "아니오", credit: "우수", result: "미구매" },
   { id: 13, age: "청년", income: "높음", student: "예", credit: "양호", result: "구매" },
-  { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "구매" }
+  { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "구매" },
+  { id: 15, age: "중년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
+  { id: 16, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
+  { id: 17, age: "청소년", income: "높음", student: "예", credit: "양호", result: "구매" },
+  { id: 18, age: "청년", income: "높음", student: "아니오", credit: "우수", result: "구매" },
+  { id: 19, age: "청소년", income: "낮음", student: "아니오", credit: "양호", result: "미구매" },
+  { id: 20, age: "청년", income: "중간", student: "예", credit: "우수", result: "미구매" }
 ];
 
 const AXES = {
@@ -423,7 +429,7 @@ function renderPlot() {
 
   plotWrap.innerHTML = `
     <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 770 475"
-      aria-label="나이와 수입에 따른 고객 14명의 분포">
+      aria-label="나이와 수입에 따른 고객 20명의 분포">
       ${regions}
       ${axesMarkup()}
       ${points}
