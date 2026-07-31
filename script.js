@@ -117,6 +117,18 @@ function formatNumber(value) {
   return normalized.toFixed(3);
 }
 
+function datasetSymbol(label = "") {
+  return `D${label ? `<sub>${label}</sub>` : ""}`;
+}
+
+function currentScopeLabel() {
+  if (state.stage === "first" || !state.firstSplit || !state.selectedGroup) return "";
+  const values = state.selectedGroup === "A"
+    ? state.firstSplit.aValues
+    : state.firstSplit.bValues;
+  return values.join("·");
+}
+
 function getSplit(orientation, candidate, ids) {
   const axis = AXES[orientation];
   const records = recordsFromIds(ids);
@@ -583,11 +595,12 @@ function renderCandidateControls() {
 function summaryCard(group, label, records) {
   const result = counts(records);
   const groupEntropy = entropy(records);
+  const datasetLabel = [currentScopeLabel(), label].filter(Boolean).join("·");
   return `
     <article class="summary-group ${group.toLowerCase()}">
       <div class="summary-group-top">
         <strong>${group} · ${result.total}명</strong>
-        <em>${label} · H = ${formatNumber(groupEntropy)}</em>
+        <em>h(${datasetSymbol(datasetLabel)}) = ${formatNumber(groupEntropy)}</em>
       </div>
       <div class="summary-counts">
         <span class="buy-text">● 구매 ${result.purchase}</span>
@@ -613,21 +626,23 @@ function renderSplitMetrics() {
 
   const split = state.stage === "complete" ? state.secondSplit : currentSplit();
   const metrics = splitMetrics(split);
+  const scopeLabel = currentScopeLabel();
+  const attributeLabel = AXES[split.orientation].shortTitle;
   container.classList.remove("is-pending");
   container.classList.toggle("is-perfect", metrics.perfect);
   container.innerHTML = `
     <div class="metric-value">
-      <span>분할 전 엔트로피</span>
+      <span>분할 전 · h(${datasetSymbol(scopeLabel)})</span>
       <strong>${formatNumber(metrics.before)}</strong>
     </div>
     <b class="metric-operator" aria-hidden="true">−</b>
     <div class="metric-value">
-      <span>분할 후 엔트로피</span>
+      <span>분할 후 · h<sub>${attributeLabel}</sub>(${datasetSymbol(scopeLabel)})</span>
       <strong>${formatNumber(metrics.after)}</strong>
     </div>
     <b class="metric-operator" aria-hidden="true">=</b>
     <div class="metric-value gain">
-      <span>정보이득</span>
+      <span>Gain(${datasetSymbol(scopeLabel)}, ${attributeLabel})</span>
       <strong>${formatNumber(metrics.gain)}</strong>
     </div>
     ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리</span>' : ""}
@@ -652,15 +667,16 @@ function renderGroupSummary() {
   `;
 }
 
-function groupNodeMarkup(ids, values) {
+function groupNodeMarkup(ids, values, parentDatasetLabel = "") {
   const records = recordsFromIds(ids);
   const result = counts(records);
   const groupEntropy = entropy(records);
+  const datasetLabel = [parentDatasetLabel, values.join("·")].filter(Boolean).join("·");
   if (groupEntropy >= 0.0005) {
     return `
       <div class="group-node mixed-node is-selected">
         <strong>${values.join(" · ")}</strong>
-        <span>혼합 · ${result.total}명 · H ${formatNumber(groupEntropy)}</span>
+        <span>혼합 · ${result.total}명 · h(${datasetSymbol(datasetLabel)}) = ${formatNumber(groupEntropy)}</span>
         <small><i class="buy-text">● 구매 ${result.purchase}</i> · <i class="no-text">▲ 미구매 ${result.noPurchase}</i></small>
       </div>
     `;
@@ -671,7 +687,7 @@ function groupNodeMarkup(ids, values) {
   return `
     <div class="group-node leaf-node ${leafClass}">
       <strong>${values.join(" · ")}</strong>
-      <span>리프 · ${result.total}명</span>
+      <span>리프 · ${result.total}명 · h(${datasetSymbol(datasetLabel)}) = 0</span>
       <small class="leaf-result">${classification === "구매" ? "●" : "▲"} ${classification}</small>
     </div>
   `;
@@ -679,20 +695,22 @@ function groupNodeMarkup(ids, values) {
 
 function secondSubtreeMarkup(split) {
   const metrics = splitMetrics(split, state.scopeIds);
+  const scopeLabel = currentScopeLabel();
+  const attributeLabel = AXES[split.orientation].shortTitle;
   return `
     <div class="subtree">
       <div class="question-node">
-        <small>두 번째 질문 · 정보이득 ${formatNumber(metrics.gain)}</small>
+        <small>두 번째 질문 · Gain(${datasetSymbol(scopeLabel)}, ${attributeLabel}) = ${formatNumber(metrics.gain)}</small>
         ${split.question}
       </div>
       <div class="tree-branches">
         <div class="tree-branch">
           <span class="branch-label">아니오</span>
-          ${groupNodeMarkup(split.groups.A, split.aValues)}
+          ${groupNodeMarkup(split.groups.A, split.aValues, scopeLabel)}
         </div>
         <div class="tree-branch">
           <span class="branch-label">예</span>
-          ${groupNodeMarkup(split.groups.B, split.bValues)}
+          ${groupNodeMarkup(split.groups.B, split.bValues, scopeLabel)}
         </div>
       </div>
     </div>
@@ -702,6 +720,7 @@ function secondSubtreeMarkup(split) {
 function treeMarkup(includeSecondSplit) {
   const root = state.firstSplit;
   const rootMetrics = splitMetrics(root, DATA.map((row) => row.id));
+  const rootAttributeLabel = AXES[root.orientation].shortTitle;
   const branchA = state.selectedGroup === "A" && includeSecondSplit
     ? secondSubtreeMarkup(state.secondSplit)
     : groupNodeMarkup(root.groups.A, root.aValues);
@@ -712,7 +731,7 @@ function treeMarkup(includeSecondSplit) {
   return `
     <div class="tree-root">
       <div class="question-node">
-        <small>첫 번째 질문 · 정보이득 ${formatNumber(rootMetrics.gain)}</small>
+        <small>첫 번째 질문 · Gain(D, ${rootAttributeLabel}) = ${formatNumber(rootMetrics.gain)}</small>
         ${root.question}
       </div>
       <div class="tree-branches">

@@ -922,6 +922,16 @@ h2 {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
+  line-height: 1.35;
+}
+
+.metric-value sub,
+.summary-group sub,
+.question-node sub,
+.group-node sub {
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 0.66em;
+  font-weight: 850;
 }
 
 .metric-value strong {
@@ -999,6 +1009,7 @@ h2 {
   font-size: 0.8rem;
   font-style: normal;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .summary-counts {
@@ -1136,6 +1147,7 @@ h2 {
   color: var(--blue-dark);
   font-size: 0.7rem;
   letter-spacing: 0.04em;
+  line-height: 1.35;
 }
 
 .tree-branches {
@@ -1234,6 +1246,7 @@ button.group-node:hover {
   margin: 3px 0;
   color: var(--muted);
   font-size: 0.65rem;
+  line-height: 1.35;
 }
 
 .group-node small {
