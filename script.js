@@ -1,26 +1,20 @@
 "use strict";
 
 const DATA = [
-  { id: 1, age: "청소년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
-  { id: 2, age: "청소년", income: "높음", student: "아니오", credit: "우수", result: "구매" },
-  { id: 3, age: "청년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
-  { id: 4, age: "중년", income: "중간", student: "아니오", credit: "양호", result: "구매" },
+  { id: 1, age: "청소년", income: "높음", student: "아니요", credit: "양호", result: "미구매" },
+  { id: 2, age: "청소년", income: "높음", student: "아니요", credit: "우수", result: "미구매" },
+  { id: 3, age: "청년", income: "높음", student: "아니요", credit: "양호", result: "구매" },
+  { id: 4, age: "중년", income: "중간", student: "아니요", credit: "양호", result: "구매" },
   { id: 5, age: "중년", income: "낮음", student: "예", credit: "양호", result: "구매" },
-  { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
-  { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "미구매" },
-  { id: 8, age: "청소년", income: "중간", student: "아니오", credit: "양호", result: "미구매" },
-  { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "미구매" },
+  { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "미구매" },
+  { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "구매" },
+  { id: 8, age: "청소년", income: "중간", student: "아니요", credit: "양호", result: "미구매" },
+  { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "구매" },
   { id: 10, age: "중년", income: "중간", student: "예", credit: "양호", result: "구매" },
-  { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "미구매" },
-  { id: 12, age: "청년", income: "중간", student: "아니오", credit: "우수", result: "미구매" },
+  { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "구매" },
+  { id: 12, age: "청년", income: "중간", student: "아니요", credit: "우수", result: "구매" },
   { id: 13, age: "청년", income: "높음", student: "예", credit: "양호", result: "구매" },
-  { id: 14, age: "중년", income: "중간", student: "아니오", credit: "우수", result: "구매" },
-  { id: 15, age: "중년", income: "높음", student: "아니오", credit: "양호", result: "구매" },
-  { id: 16, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
-  { id: 17, age: "청소년", income: "높음", student: "예", credit: "양호", result: "구매" },
-  { id: 18, age: "청년", income: "높음", student: "아니오", credit: "우수", result: "구매" },
-  { id: 19, age: "청소년", income: "낮음", student: "아니오", credit: "양호", result: "미구매" },
-  { id: 20, age: "청년", income: "중간", student: "예", credit: "우수", result: "미구매" }
+  { id: 14, age: "중년", income: "중간", student: "아니요", credit: "우수", result: "미구매" }
 ];
 
 const AXES = {
@@ -512,7 +506,7 @@ function renderPlot() {
 
   plotWrap.innerHTML = `
     <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 770 475"
-      aria-label="나이와 수입에 따른 고객 20명의 분포">
+      aria-label="나이와 수입에 따른 고객 14명의 분포">
       ${regions}
       ${axesMarkup()}
       ${points}
@@ -755,7 +749,7 @@ function renderTreeRecap() {
   const labels = [
     ["분할 전", "전체 데이터 · 질문 없음"],
     ["1차 분할", "분할선 1개 · 질문 노드 1개"],
-    ["최종 트리", "질문 2개 · 리프 노드 3개"]
+    ["2차 분할", "분할선 2개 · 질문 노드 2개"]
   ];
   document.getElementById("tree-recap-label").textContent = labels[state.treeStep][0];
   document.getElementById("tree-recap-heading").textContent = labels[state.treeStep][1];
@@ -810,7 +804,7 @@ function renderStageText() {
   const stageText = {
     first: "1차 · 나이 분할",
     second: "2차 · 수입 분할",
-    complete: "트리 완성"
+    complete: "2차 분할 완료"
   };
   chip.textContent = stageText[state.stage];
   guide.classList.remove("is-error", "is-perfect");
@@ -841,12 +835,12 @@ function renderStageText() {
       guide.textContent = "몇 번 분할선으로 나눌까요?";
     } else {
       const metrics = splitMetrics(currentSplit());
-      if (metrics.perfect) {
-        guide.textContent = "완전 분리 · 엔트로피 0";
-        guide.classList.add("is-perfect");
-      } else {
-        guide.textContent = "정보이득 확인 · 다른 분할선과 비교";
-      }
+      const best = bestSplitForScope(state.scopeIds, [state.orientation]);
+      const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
+      guide.textContent = isBest
+        ? "정보이득 최대 · 이 분할로 진행"
+        : "정보이득 확인 · 다른 분할선과 비교";
+      guide.classList.toggle("is-perfect", isBest);
     }
     confirm.hidden = false;
     confirm.disabled = false;
@@ -854,7 +848,7 @@ function renderStageText() {
   } else {
     const firstGain = splitMetrics(state.firstSplit, DATA.map((row) => row.id)).gain;
     const secondGain = splitMetrics(state.secondSplit, state.scopeIds).gain;
-    guide.textContent = `정보이득 ${formatNumber(firstGain)} → ${formatNumber(secondGain)} · 리프 완성`;
+    guide.textContent = `정보이득 ${formatNumber(firstGain)} → ${formatNumber(secondGain)} · 두 질문 반영`;
     guide.classList.add("is-perfect");
     confirm.hidden = true;
   }
@@ -907,8 +901,9 @@ function confirmCurrentSplit() {
   if (state.stage === "second") {
     const split = currentSplit();
     const metrics = splitMetrics(split);
-    if (!metrics.perfect) {
-      state.feedback = "혼합 상태 유지 · 다른 위치 선택";
+    const best = bestSplitForScope(state.scopeIds, [state.orientation]);
+    if (Math.abs(metrics.gain - best.metrics.gain) >= 0.0005) {
+      state.feedback = "더 큰 정보이득의 분할 후보 존재";
       renderAll();
       return;
     }
