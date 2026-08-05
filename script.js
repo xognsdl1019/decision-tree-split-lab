@@ -2,19 +2,25 @@
 
 const DATA = [
   { id: 1, age: "청소년", income: "높음", student: "아니요", credit: "양호", result: "미구매" },
-  { id: 2, age: "청소년", income: "높음", student: "아니요", credit: "우수", result: "미구매" },
-  { id: 3, age: "청년", income: "높음", student: "아니요", credit: "양호", result: "구매" },
-  { id: 4, age: "중년", income: "중간", student: "아니요", credit: "양호", result: "구매" },
-  { id: 5, age: "중년", income: "낮음", student: "예", credit: "양호", result: "구매" },
-  { id: 6, age: "중년", income: "낮음", student: "예", credit: "우수", result: "미구매" },
-  { id: 7, age: "청년", income: "낮음", student: "예", credit: "우수", result: "구매" },
-  { id: 8, age: "청소년", income: "중간", student: "아니요", credit: "양호", result: "미구매" },
-  { id: 9, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "구매" },
-  { id: 10, age: "중년", income: "중간", student: "예", credit: "양호", result: "구매" },
-  { id: 11, age: "청소년", income: "중간", student: "예", credit: "우수", result: "구매" },
-  { id: 12, age: "청년", income: "중간", student: "아니요", credit: "우수", result: "구매" },
-  { id: 13, age: "청년", income: "높음", student: "예", credit: "양호", result: "구매" },
-  { id: 14, age: "중년", income: "중간", student: "아니요", credit: "우수", result: "미구매" }
+  { id: 2, age: "청소년", income: "중간", student: "아니요", credit: "우수", result: "미구매" },
+  { id: 3, age: "청소년", income: "중간", student: "아니요", credit: "양호", result: "미구매" },
+  { id: 4, age: "청소년", income: "중간", student: "예", credit: "우수", result: "미구매" },
+  { id: 5, age: "청소년", income: "낮음", student: "예", credit: "양호", result: "미구매" },
+  { id: 6, age: "청소년", income: "낮음", student: "아니요", credit: "우수", result: "미구매" },
+  { id: 7, age: "청년", income: "낮음", student: "예", credit: "양호", result: "구매" },
+  { id: 8, age: "청년", income: "낮음", student: "예", credit: "우수", result: "구매" },
+  { id: 9, age: "청년", income: "낮음", student: "아니요", credit: "양호", result: "구매" },
+  { id: 10, age: "청년", income: "중간", student: "예", credit: "우수", result: "구매" },
+  { id: 11, age: "청년", income: "중간", student: "아니요", credit: "양호", result: "구매" },
+  { id: 12, age: "청년", income: "높음", student: "아니요", credit: "우수", result: "미구매" },
+  { id: 13, age: "중년", income: "낮음", student: "예", credit: "양호", result: "구매" },
+  { id: 14, age: "중년", income: "낮음", student: "아니요", credit: "우수", result: "구매" },
+  { id: 15, age: "중년", income: "낮음", student: "예", credit: "우수", result: "구매" },
+  { id: 16, age: "중년", income: "중간", student: "아니요", credit: "양호", result: "구매" },
+  { id: 17, age: "중년", income: "중간", student: "예", credit: "양호", result: "구매" },
+  { id: 18, age: "중년", income: "중간", student: "아니요", credit: "우수", result: "구매" },
+  { id: 19, age: "중년", income: "중간", student: "예", credit: "우수", result: "구매" },
+  { id: 20, age: "중년", income: "높음", student: "아니요", credit: "양호", result: "미구매" }
 ];
 
 const AXES = {
@@ -40,12 +46,12 @@ const AXES = {
 
 const PLOT = { left: 90, right: 710, top: 55, bottom: 430 };
 const POINT_OFFSETS = [
-  [-17, -14],
-  [17, -14],
-  [-19, 16],
-  [19, 16],
+  [-22, -18],
+  [22, -18],
+  [-24, 18],
+  [24, 18],
   [0, 0],
-  [0, 29]
+  [0, 34]
 ];
 
 const state = {
@@ -506,7 +512,7 @@ function renderPlot() {
 
   plotWrap.innerHTML = `
     <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 770 475"
-      aria-label="나이와 수입에 따른 고객 14명의 분포">
+      aria-label="나이와 수입에 따른 고객 20명의 분포">
       ${regions}
       ${axesMarkup()}
       ${points}
@@ -590,11 +596,13 @@ function summaryCard(group, label, records) {
   const result = counts(records);
   const groupEntropy = entropy(records);
   const datasetLabel = [currentScopeLabel(), label].filter(Boolean).join("·");
+  const isLeaf = groupEntropy < 0.0005;
+  const classification = result.purchase === result.total ? "구매" : "미구매";
   return `
     <article class="summary-group ${group.toLowerCase()}">
       <div class="summary-group-top">
         <strong>${group} · ${result.total}명</strong>
-        <em>h(${datasetSymbol(datasetLabel)}) = ${formatNumber(groupEntropy)}</em>
+        <em>${isLeaf ? `리프 · ${classification} · ` : ""}h(${datasetSymbol(datasetLabel)}) = ${formatNumber(groupEntropy)}</em>
       </div>
       <div class="summary-counts">
         <span class="buy-text">● 구매 ${result.purchase}</span>
@@ -639,7 +647,7 @@ function renderSplitMetrics() {
       <span>Gain(${datasetSymbol(scopeLabel)}, ${attributeLabel})</span>
       <strong>${formatNumber(metrics.gain)}</strong>
     </div>
-    ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리</span>' : ""}
+    ${metrics.perfect ? '<span class="perfect-badge">✓ 완전 분리 · 리프 생성</span>' : ""}
   `;
 }
 
@@ -748,8 +756,8 @@ function renderTreeRecap() {
 
   const labels = [
     ["분할 전", "전체 데이터 · 질문 없음"],
-    ["1차 분할", "분할선 1개 · 질문 노드 1개"],
-    ["2차 분할", "분할선 2개 · 질문 노드 2개"]
+    ["1차 분할", "분할선 1개 · 질문 노드 1개 · 리프 1개"],
+    ["2차 분할", "분할선 2개 · 질문 노드 2개 · 리프 3개"]
   ];
   document.getElementById("tree-recap-label").textContent = labels[state.treeStep][0];
   document.getElementById("tree-recap-heading").textContent = labels[state.treeStep][1];
@@ -819,8 +827,11 @@ function renderStageText() {
       const metrics = splitMetrics(currentSplit());
       const best = bestSplitForScope(state.scopeIds);
       const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
+      const pureGroupExists = metrics.entropyA < 0.0005 || metrics.entropyB < 0.0005;
       guide.textContent = isBest
-        ? "정보이득 최대 · 이 분할로 진행"
+        ? pureGroupExists
+          ? "정보이득 최대 · 엔트로피 0인 집단은 리프 노드로 생성"
+          : "정보이득 최대 · 이 분할로 진행"
         : "정보이득 확인 · 다른 분할선과 비교";
       guide.classList.toggle("is-perfect", isBest);
     }
@@ -838,7 +849,9 @@ function renderStageText() {
       const best = bestSplitForScope(state.scopeIds, [state.orientation]);
       const isBest = Math.abs(metrics.gain - best.metrics.gain) < 0.0005;
       guide.textContent = isBest
-        ? "정보이득 최대 · 이 분할로 진행"
+        ? metrics.perfect
+          ? "완전 분리 · 두 집단 모두 리프 노드로 생성"
+          : "정보이득 최대 · 이 분할로 진행"
         : "정보이득 확인 · 다른 분할선과 비교";
       guide.classList.toggle("is-perfect", isBest);
     }
@@ -848,11 +861,10 @@ function renderStageText() {
   } else {
     const firstGain = splitMetrics(state.firstSplit, DATA.map((row) => row.id)).gain;
     const secondGain = splitMetrics(state.secondSplit, state.scopeIds).gain;
-    guide.textContent = `정보이득 ${formatNumber(firstGain)} → ${formatNumber(secondGain)} · 두 질문 반영`;
+    guide.textContent = `정보이득 ${formatNumber(firstGain)} → ${formatNumber(secondGain)} · 리프 노드 3개 생성`;
     guide.classList.add("is-perfect");
     confirm.hidden = true;
   }
-
 }
 
 function renderAll() {
